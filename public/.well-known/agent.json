@@ -1,0 +1,4 @@
+{
+  "legacyNotice": "Use /.well-known/agent-card.json for the canonical A2A Agent Card.",
+  "canonical": "/.well-known/agent-card.json"
+}

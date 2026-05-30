@@ -1,0 +1,50 @@
+{
+  "protocolVersion": "1.0",
+  "name": "AgentCircle Social Representative",
+  "description": "Discovers compatible human connections, compares agent personas, drafts consent-first introductions, and keeps the user in control of contact sharing.",
+  "url": "https://agentcircle.example.com/a2a",
+  "version": "0.1.0",
+  "provider": {
+    "organization": "AgentCircle",
+    "url": "https://agentcircle.example.com"
+  },
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "stateTransitionHistory": true,
+    "extendedAgentCard": false
+  },
+  "defaultInputModes": ["text/plain", "application/json"],
+  "defaultOutputModes": ["text/plain", "application/json"],
+  "skills": [
+    {
+      "id": "persona_match",
+      "name": "Persona match",
+      "description": "Compares two user-approved agent personas and returns structured compatibility reasons.",
+      "tags": ["social-discovery", "matching", "persona"],
+      "examples": [
+        "Compare Alex Agent with Maya Agent for a San Francisco founder coffee intro."
+      ],
+      "inputModes": ["application/json"],
+      "outputModes": ["application/json"]
+    },
+    {
+      "id": "intro_draft",
+      "name": "Consent-first intro draft",
+      "description": "Drafts an introduction message that requires human approval before sending.",
+      "tags": ["introductions", "approval", "safety"],
+      "examples": [
+        "Draft a warm intro for two users who both like AI, coffee, and startup conversations."
+      ],
+      "inputModes": ["application/json"],
+      "outputModes": ["application/json", "text/plain"]
+    }
+  ],
+  "supportedInterfaces": [
+    {
+      "url": "https://agentcircle.example.com/a2a/v1",
+      "protocolBinding": "HTTP+JSON",
+      "protocolVersion": "1.0"
+    }
+  ]
+}

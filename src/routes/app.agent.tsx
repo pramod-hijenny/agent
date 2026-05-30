@@ -1,0 +1,232 @@
+import { useState } from "react";
+import { useUser, updateUser, updatePermissions } from "@/lib/store";
+import { AgentCard } from "@/components/AgentCard";
+import { PermissionToggle } from "@/components/PermissionToggle";
+import { ActivityTimeline } from "@/components/ActivityTimeline";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { AiBadge } from "@/components/AiBadge";
+import { Pause, Play, Send, Plus, Trash2 } from "lucide-react";
+
+export function AgentPage() {
+  const user = useUser();
+  const [newMem, setNewMem] = useState("");
+  const [chat, setChat] = useState<{ from: "user" | "agent"; text: string }[]>([]);
+  const [input, setInput] = useState("");
+  if (!user) return null;
+
+  function sendTest() {
+    if (!input.trim() || !user) return;
+    const q = input;
+    setChat((c) => [...c, { from: "user", text: q }]);
+    setInput("");
+    setTimeout(() => {
+      const reply = generateAgentReply(q, user);
+      setChat((c) => [...c, { from: "agent", text: reply }]);
+    }, 500);
+  }
+
+  return (
+    <div className="mx-auto max-w-6xl space-y-6">
+      <h1 className="text-2xl font-semibold tracking-tight">My Agent</h1>
+      <AgentCard profile={user} />
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Panel title="Agent memory">
+          <div className="space-y-2">
+            {user.agent.memory.map((m, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-2 rounded-xl border border-border bg-secondary/40 p-3 text-sm"
+              >
+                <span className="flex-1">{m}</span>
+                <button
+                  className="text-muted-foreground hover:text-destructive"
+                  onClick={() =>
+                    updateUser((u) => ({
+                      ...u,
+                      agent: { ...u.agent, memory: u.agent.memory.filter((_, j) => j !== i) },
+                    }))
+                  }
+                  aria-label="Remove"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 flex gap-2">
+            <Input
+              value={newMem}
+              onChange={(e) => setNewMem(e.target.value)}
+              placeholder="Add a memory…"
+              className="rounded-xl"
+            />
+            <Button
+              onClick={() => {
+                if (!newMem.trim()) return;
+                updateUser((u) => ({
+                  ...u,
+                  agent: { ...u.agent, memory: [...u.agent.memory, newMem.trim()] },
+                }));
+                setNewMem("");
+              }}
+              className="rounded-xl"
+            >
+              <Plus className="h-4 w-4" /> Add
+            </Button>
+          </div>
+        </Panel>
+
+        <Panel title="Permissions">
+          <div className="space-y-2">
+            <PermissionToggle
+              label="Talk to other agents"
+              checked={user.permissions.can_talk_to_agents}
+              onCheckedChange={(v) => updatePermissions((p) => ({ ...p, can_talk_to_agents: v }))}
+            />
+            <PermissionToggle
+              label="Recommend people"
+              checked={user.permissions.can_recommend_people}
+              onCheckedChange={(v) => updatePermissions((p) => ({ ...p, can_recommend_people: v }))}
+            />
+            <PermissionToggle
+              label="Draft intro messages"
+              checked={user.permissions.can_draft_messages}
+              onCheckedChange={(v) => updatePermissions((p) => ({ ...p, can_draft_messages: v }))}
+            />
+            <PermissionToggle
+              sensitive
+              label="Send messages without approval"
+              checked={user.permissions.can_send_without_approval}
+              onCheckedChange={(v) =>
+                updatePermissions((p) => ({ ...p, can_send_without_approval: v }))
+              }
+            />
+            <PermissionToggle
+              sensitive
+              label="Share contact info"
+              checked={user.permissions.can_share_email}
+              onCheckedChange={(v) =>
+                updatePermissions((p) => ({ ...p, can_share_email: v, can_share_phone: v }))
+              }
+            />
+            <PermissionToggle
+              sensitive
+              label="Schedule meetings"
+              checked={user.permissions.can_schedule_meetings}
+              onCheckedChange={(v) =>
+                updatePermissions((p) => ({ ...p, can_schedule_meetings: v }))
+              }
+            />
+            <PermissionToggle
+              label="Discuss professional background"
+              checked={user.permissions.can_discuss_professional}
+              onCheckedChange={(v) =>
+                updatePermissions((p) => ({ ...p, can_discuss_professional: v }))
+              }
+            />
+          </div>
+        </Panel>
+
+        <Panel title="Test my agent">
+          <div className="space-y-2 max-h-72 overflow-y-auto">
+            {chat.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                Try: "Find three mentors who can review my onboarding flow"
+              </p>
+            )}
+            {chat.map((m, i) => (
+              <div
+                key={i}
+                className={m.from === "user" ? "flex justify-end" : "flex justify-start"}
+              >
+                <div
+                  className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${m.from === "user" ? "bg-primary/10" : "bg-agent-soft"}`}
+                >
+                  {m.from === "agent" && <AiBadge className="mb-1" label={user.agent.agent_name} />}
+                  <p>{m.text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 flex gap-2">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && sendTest()}
+              placeholder="Ask your agent…"
+              className="rounded-xl"
+            />
+            <Button onClick={sendTest} className="rounded-xl">
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+        </Panel>
+
+        <Panel title="Recent activity">
+          <ActivityTimeline
+            items={[
+              { icon: "search", title: "Agent searched San Francisco", time: "2 min ago" },
+              { icon: "agent", title: "Agent talked to Maya Agent", time: "10 min ago" },
+              { icon: "users", title: "Agent recommended 3 intros", time: "1 hr ago" },
+              { icon: "check", title: "Agent needs approval on 2 intros", time: "Today" },
+            ]}
+          />
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              className="rounded-xl"
+              onClick={() =>
+                updateUser((u) => ({
+                  ...u,
+                  agent: { ...u.agent, status: u.agent.status === "active" ? "paused" : "active" },
+                }))
+              }
+            >
+              {user.agent.status === "active" ? (
+                <>
+                  <Pause className="h-4 w-4" /> Pause Agent
+                </>
+              ) : (
+                <>
+                  <Play className="h-4 w-4" /> Resume Agent
+                </>
+              )}
+            </Button>
+            <Button variant="secondary" className="rounded-xl">
+              New Mission
+            </Button>
+          </div>
+        </Panel>
+      </div>
+    </div>
+  );
+}
+
+function Panel({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div
+      className="rounded-2xl border border-border bg-card p-5"
+      style={{ boxShadow: "var(--shadow-card)" }}
+    >
+      <h2 className="mb-3 font-semibold">{title}</h2>
+      {children}
+    </div>
+  );
+}
+
+function generateAgentReply(
+  q: string,
+  user: { full_name: string; city: string; interests: string[]; agent: { agent_name: string } },
+) {
+  const lower = q.toLowerCase();
+  if (lower.includes("introduce")) {
+    return `Hi — I'm ${user.agent.agent_name}, the AI representative for ${user.full_name}. I help ${user.full_name.split(" ")[0]} find compatible people in ${user.city}. I only share what they approve.`;
+  }
+  if (lower.includes("find") || lower.includes("san francisco") || lower.includes("recommend")) {
+    return `Based on ${user.full_name.split(" ")[0]}'s interests (${user.interests.slice(0, 3).join(", ").toLowerCase()}), I'd recommend Maya Chen, Sofia Alvarez, and Omar Williams. Want me to prepare a compatibility review with one of their agents? Human approval required before any intro.`;
+  }
+  return `Got it. I'll factor that in when matching people. Anything you'd like me to keep private?`;
+}

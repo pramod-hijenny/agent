@@ -1,6 +1,6 @@
 ---
 description: Use when working with RocketRide pipelines, SDK, components, or configuration
-globs: ['**/*.pipe', '**/pipeline*.json', '**/*rocketride*']
+globs: ["**/*.pipe", "**/pipeline*.json", "**/*rocketride*"]
 ---
 
 <!-- ROCKETRIDE:BEGIN -->

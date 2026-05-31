@@ -117,344 +117,381 @@ export function Onboarding() {
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-8" style={{ background: "var(--gradient-hero)" }}>
-      <div
-        className="mx-auto max-w-2xl rounded-3xl border border-border bg-card p-6 md:p-8"
-        style={{ boxShadow: "var(--shadow-elevated)" }}
-      >
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Sparkles className="h-4 w-4 text-agent" /> Step {step + 1} of 6
-        </div>
-        <div className="mt-3">
-          <OnboardingStepper step={step} total={6} />
-        </div>
+    <div className="relative min-h-screen overflow-hidden bg-[#eef4ff] p-4 text-black md:p-8">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,#ffb6d5_0,transparent_28rem),radial-gradient(circle_at_90%_18%,#b8e5ff_0,transparent_32rem),linear-gradient(135deg,#f8fbff,#d9e8ff_48%,#f7eefc)]" />
+      <div className="absolute inset-0 opacity-[0.18] [background-image:linear-gradient(#1f2937_1px,transparent_1px),linear-gradient(90deg,#1f2937_1px,transparent_1px)] [background-size:54px_54px]" />
+      <div className="relative mx-auto grid max-w-6xl gap-6 lg:grid-cols-[430px_minmax(0,1fr)]">
+        <section className="relative hidden overflow-hidden rounded-[2rem] bg-black p-8 text-white shadow-[0_32px_90px_rgb(38_52_78_/_0.28)] lg:block">
+          <img
+            src="https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=900&q=85"
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover opacity-55"
+            loading="lazy"
+            referrerPolicy="no-referrer"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-black/20" />
+          <div className="relative flex min-h-[720px] flex-col justify-between">
+            <span className="w-fit rounded-full bg-white/15 px-4 py-2 text-sm font-black backdrop-blur">
+              Social profile setup
+            </span>
+            <div>
+              <h1 className="text-5xl font-black leading-tight tracking-tight">
+                Build the profile your agent will represent.
+              </h1>
+              <p className="mt-4 text-sm font-semibold leading-6 text-white/65">
+                Add enough signal for high-context intros, useful matches, and consent-first
+                conversations.
+              </p>
+            </div>
+          </div>
+        </section>
 
-        <div className="mt-6 min-h-[340px]">
-          {step === 0 && (
-            <Step
-              title="Join the demo community"
-              subtitle="The MVP starts inside one trusted startup network."
-            >
-              <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
-                <p className="text-sm font-semibold text-foreground">{DEMO_COMMUNITY.name}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{DEMO_COMMUNITY.description}</p>
-              </div>
-              <Field label="Full name">
-                <Input
-                  value={full_name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="rounded-xl"
-                  placeholder="Alex Carter"
-                />
-              </Field>
-              <Field label="Profile photo">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-secondary text-xs text-muted-foreground">
-                    Photo
+        <div className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_26px_80px_rgb(41_55_92_/_0.18)] backdrop-blur-xl md:p-8">
+          <div className="flex items-center gap-2 text-sm font-black text-slate-500">
+            <Sparkles className="h-4 w-4 text-black" /> Step {step + 1} of 6
+          </div>
+          <div className="mt-3">
+            <OnboardingStepper step={step} total={6} />
+          </div>
+
+          <div className="mt-6 min-h-[340px]">
+            {step === 0 && (
+              <Step
+                title="Join the demo community"
+                subtitle="The MVP starts inside one trusted startup network."
+              >
+                <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+                  <p className="text-sm font-semibold text-foreground">{DEMO_COMMUNITY.name}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{DEMO_COMMUNITY.description}</p>
+                </div>
+                <Field label="Full name">
+                  <Input
+                    value={full_name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="rounded-xl"
+                    placeholder="Alex Carter"
+                  />
+                </Field>
+                <Field label="Profile photo">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-secondary text-xs text-muted-foreground">
+                      Photo
+                    </div>
+                    <Button variant="outline" type="button" className="rounded-xl">
+                      Upload (placeholder)
+                    </Button>
                   </div>
-                  <Button variant="outline" type="button" className="rounded-xl">
-                    Upload (placeholder)
+                </Field>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Field label="City">
+                    <Input
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      className="rounded-xl"
+                      placeholder="San Francisco"
+                    />
+                  </Field>
+                  <Field label="Profession / title">
+                    <Input
+                      value={profession}
+                      onChange={(e) => setProfession(e.target.value)}
+                      className="rounded-xl"
+                      placeholder="Product Designer"
+                    />
+                  </Field>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Field label="Startup role">
+                    <Select value={role} onValueChange={(v) => setRole(v as Profile["role"])}>
+                      <SelectTrigger className="rounded-xl">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {["Founder", "Builder", "Operator", "Investor", "Mentor", "Advisor"].map(
+                          (value) => (
+                            <SelectItem key={value} value={value}>
+                              {value}
+                            </SelectItem>
+                          ),
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field label="Stage">
+                    <Input
+                      value={stage}
+                      onChange={(e) => setStage(e.target.value)}
+                      className="rounded-xl"
+                      placeholder="Pre-seed"
+                    />
+                  </Field>
+                </div>
+                <Field label="Company or school">
+                  <Input
+                    value={company}
+                    onChange={(e) => setCompany(e.target.value)}
+                    className="rounded-xl"
+                  />
+                </Field>
+                <Field label="Short bio">
+                  <Textarea
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    className="rounded-xl"
+                    rows={3}
+                    placeholder="What you're building, exploring, or helping with right now."
+                  />
+                </Field>
+              </Step>
+            )}
+
+            {step === 1 && (
+              <Step
+                title="Skills and context"
+                subtitle="Help the community understand what you know and what you care about."
+              >
+                <p className="text-sm font-medium text-foreground">Skills</p>
+                <InterestChips items={ALL_SKILLS} selected={skills} onToggle={toggleSkill} />
+                <p className="pt-2 text-sm font-medium text-foreground">Interests</p>
+                <InterestChips
+                  items={ALL_INTERESTS}
+                  selected={interests}
+                  onToggle={toggleInterest}
+                />
+                <div className="flex gap-2">
+                  <Input
+                    value={customInterest}
+                    onChange={(e) => setCustomInterest(e.target.value)}
+                    className="rounded-xl"
+                    placeholder="Add custom interest"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="rounded-xl"
+                    onClick={() => {
+                      if (customInterest.trim()) {
+                        setInterests((a) => [...a, customInterest.trim()]);
+                        setCustomInterest("");
+                      }
+                    }}
+                  >
+                    Add
                   </Button>
                 </div>
-              </Field>
-              <div className="grid gap-4 md:grid-cols-2">
-                <Field label="City">
-                  <Input
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
+              </Step>
+            )}
+
+            {step === 2 && (
+              <Step title="Your networking ask" subtitle="Make matching specific and useful.">
+                <Field label="Current ask">
+                  <Textarea
+                    value={currentAsk}
+                    onChange={(e) => setCurrentAsk(e.target.value)}
                     className="rounded-xl"
-                    placeholder="San Francisco"
+                    rows={2}
+                    placeholder="Find AI founders who can give feedback on my onboarding flow."
                   />
                 </Field>
-                <Field label="Profession / title">
-                  <Input
-                    value={profession}
-                    onChange={(e) => setProfession(e.target.value)}
+                <Field label="What I can help with">
+                  <Textarea
+                    value={offering}
+                    onChange={(e) => setOffering(e.target.value)}
                     className="rounded-xl"
-                    placeholder="Product Designer"
+                    rows={2}
+                    placeholder="I can help with product strategy, AI UX, and customer discovery."
                   />
                 </Field>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <Field label="Startup role">
-                  <Select value={role} onValueChange={(v) => setRole(v as Profile["role"])}>
+                <Field label="Availability">
+                  <Input
+                    value={availability}
+                    onChange={(e) => setAvailability(e.target.value)}
+                    className="rounded-xl"
+                    placeholder="Two 30-minute calls per week"
+                  />
+                </Field>
+                <Field label="Signals I like in an intro">
+                  <Textarea
+                    value={likes}
+                    onChange={(e) => setLikes(e.target.value)}
+                    className="rounded-xl"
+                    rows={2}
+                  />
+                </Field>
+                <Field label="Signals I want to avoid">
+                  <Textarea
+                    value={dislikes}
+                    onChange={(e) => setDislikes(e.target.value)}
+                    className="rounded-xl"
+                    rows={2}
+                  />
+                </Field>
+                <Field label="Topics I enjoy">
+                  <Textarea
+                    value={topics_enjoy}
+                    onChange={(e) => setEnjoy(e.target.value)}
+                    className="rounded-xl"
+                    rows={2}
+                  />
+                </Field>
+                <Field label="Topics I avoid">
+                  <Textarea
+                    value={topics_avoid}
+                    onChange={(e) => setAvoid(e.target.value)}
+                    className="rounded-xl"
+                    rows={2}
+                  />
+                </Field>
+              </Step>
+            )}
+
+            {step === 3 && (
+              <Step
+                title="What are you looking for?"
+                subtitle="Pick the outcomes your agent should optimize for."
+              >
+                <div className="grid gap-2 md:grid-cols-2">
+                  {GOAL_KEYS.map((g) => (
+                    <label
+                      key={g}
+                      className="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-card p-3 text-sm"
+                    >
+                      <Checkbox checked={goals.includes(g)} onCheckedChange={() => toggleGoal(g)} />
+                      {GOAL_LABELS[g]}
+                    </label>
+                  ))}
+                </div>
+              </Step>
+            )}
+
+            {step === 4 && (
+              <Step
+                title="Design your agent"
+                subtitle="This is who represents you in intro workflows."
+              >
+                <Field label="Agent name">
+                  <Input
+                    value={agent_name}
+                    onChange={(e) => setAgentName(e.target.value)}
+                    className="rounded-xl"
+                    placeholder={`${(full_name || "Your").split(" ")[0]} Agent`}
+                  />
+                </Field>
+                <Field label="Tone">
+                  <Select value={tone} onValueChange={(v) => setTone(v as AgentTone)}>
                     <SelectTrigger className="rounded-xl">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {["Founder", "Builder", "Operator", "Investor", "Mentor", "Advisor"].map(
-                        (value) => (
-                          <SelectItem key={value} value={value}>
-                            {value}
-                          </SelectItem>
-                        ),
-                      )}
+                      {TONES.map((t) => (
+                        <SelectItem key={t} value={t}>
+                          {t}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </Field>
-                <Field label="Stage">
-                  <Input
-                    value={stage}
-                    onChange={(e) => setStage(e.target.value)}
-                    className="rounded-xl"
-                    placeholder="Pre-seed"
-                  />
-                </Field>
-              </div>
-              <Field label="Company or school">
-                <Input
-                  value={company}
-                  onChange={(e) => setCompany(e.target.value)}
-                  className="rounded-xl"
-                />
-              </Field>
-              <Field label="Short bio">
-                <Textarea
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  className="rounded-xl"
-                  rows={3}
-                  placeholder="What you're building, exploring, or helping with right now."
-                />
-              </Field>
-            </Step>
-          )}
-
-          {step === 1 && (
-            <Step
-              title="Skills and context"
-              subtitle="Help the community understand what you know and what you care about."
-            >
-              <p className="text-sm font-medium text-foreground">Skills</p>
-              <InterestChips items={ALL_SKILLS} selected={skills} onToggle={toggleSkill} />
-              <p className="pt-2 text-sm font-medium text-foreground">Interests</p>
-              <InterestChips items={ALL_INTERESTS} selected={interests} onToggle={toggleInterest} />
-              <div className="flex gap-2">
-                <Input
-                  value={customInterest}
-                  onChange={(e) => setCustomInterest(e.target.value)}
-                  className="rounded-xl"
-                  placeholder="Add custom interest"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="rounded-xl"
-                  onClick={() => {
-                    if (customInterest.trim()) {
-                      setInterests((a) => [...a, customInterest.trim()]);
-                      setCustomInterest("");
-                    }
-                  }}
-                >
-                  Add
+                <div className="rounded-2xl border border-agent/20 bg-agent-soft/40 p-4">
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-agent">
+                    Agent intro preview
+                  </p>
+                  <p className="mt-1 text-sm text-foreground">
+                    {agentPreview(full_name, tone, interests)}
+                  </p>
+                </div>
+                <Button type="button" variant="outline" className="rounded-xl">
+                  <Sparkles className="h-4 w-4" /> Generate My Agent
                 </Button>
-              </div>
-            </Step>
-          )}
+              </Step>
+            )}
 
-          {step === 2 && (
-            <Step title="Your networking ask" subtitle="Make matching specific and useful.">
-              <Field label="Current ask">
-                <Textarea
-                  value={currentAsk}
-                  onChange={(e) => setCurrentAsk(e.target.value)}
-                  className="rounded-xl"
-                  rows={2}
-                  placeholder="Find AI founders who can give feedback on my onboarding flow."
-                />
-              </Field>
-              <Field label="What I can help with">
-                <Textarea
-                  value={offering}
-                  onChange={(e) => setOffering(e.target.value)}
-                  className="rounded-xl"
-                  rows={2}
-                  placeholder="I can help with product strategy, AI UX, and customer discovery."
-                />
-              </Field>
-              <Field label="Availability">
-                <Input
-                  value={availability}
-                  onChange={(e) => setAvailability(e.target.value)}
-                  className="rounded-xl"
-                  placeholder="Two 30-minute calls per week"
-                />
-              </Field>
-              <Field label="Signals I like in an intro">
-                <Textarea
-                  value={likes}
-                  onChange={(e) => setLikes(e.target.value)}
-                  className="rounded-xl"
-                  rows={2}
-                />
-              </Field>
-              <Field label="Signals I want to avoid">
-                <Textarea
-                  value={dislikes}
-                  onChange={(e) => setDislikes(e.target.value)}
-                  className="rounded-xl"
-                  rows={2}
-                />
-              </Field>
-              <Field label="Topics I enjoy">
-                <Textarea
-                  value={topics_enjoy}
-                  onChange={(e) => setEnjoy(e.target.value)}
-                  className="rounded-xl"
-                  rows={2}
-                />
-              </Field>
-              <Field label="Topics I avoid">
-                <Textarea
-                  value={topics_avoid}
-                  onChange={(e) => setAvoid(e.target.value)}
-                  className="rounded-xl"
-                  rows={2}
-                />
-              </Field>
-            </Step>
-          )}
+            {step === 5 && (
+              <Step
+                title="Boundaries & permissions"
+                subtitle="You're always in control. Sensitive actions are off by default."
+              >
+                <div className="space-y-2">
+                  <PermissionToggle
+                    label="Agent can talk to other agents"
+                    checked={perms.can_talk_to_agents}
+                    onCheckedChange={(v) => setPerms((p) => ({ ...p, can_talk_to_agents: v }))}
+                  />
+                  <PermissionToggle
+                    label="Agent can recommend people"
+                    checked={perms.can_recommend_people}
+                    onCheckedChange={(v) => setPerms((p) => ({ ...p, can_recommend_people: v }))}
+                  />
+                  <PermissionToggle
+                    label="Agent can draft intro messages"
+                    checked={perms.can_draft_messages}
+                    onCheckedChange={(v) => setPerms((p) => ({ ...p, can_draft_messages: v }))}
+                  />
+                  <PermissionToggle
+                    sensitive
+                    label="Agent can send messages without approval"
+                    description="Default off — we strongly recommend keeping this off."
+                    checked={perms.can_send_without_approval}
+                    onCheckedChange={(v) =>
+                      setPerms((p) => ({ ...p, can_send_without_approval: v }))
+                    }
+                  />
+                  <PermissionToggle
+                    sensitive
+                    label="Agent can share my phone number"
+                    checked={perms.can_share_phone}
+                    onCheckedChange={(v) => setPerms((p) => ({ ...p, can_share_phone: v }))}
+                  />
+                  <PermissionToggle
+                    sensitive
+                    label="Agent can share my email"
+                    checked={perms.can_share_email}
+                    onCheckedChange={(v) => setPerms((p) => ({ ...p, can_share_email: v }))}
+                  />
+                  <PermissionToggle
+                    sensitive
+                    label="Agent can schedule meetings"
+                    checked={perms.can_schedule_meetings}
+                    onCheckedChange={(v) => setPerms((p) => ({ ...p, can_schedule_meetings: v }))}
+                  />
+                  <PermissionToggle
+                    sensitive
+                    label="Agent can discuss salary or finances"
+                    checked={perms.can_discuss_finances}
+                    onCheckedChange={(v) => setPerms((p) => ({ ...p, can_discuss_finances: v }))}
+                  />
+                  <PermissionToggle
+                    locked
+                    label="Agent can discuss private address"
+                    description="Always off. We never let your agent share this."
+                    checked={false}
+                  />
+                </div>
+                <SafetyNotice>
+                  Your agent will always be labeled as AI and will never pretend to be you.
+                </SafetyNotice>
+              </Step>
+            )}
+          </div>
 
-          {step === 3 && (
-            <Step
-              title="What are you looking for?"
-              subtitle="Pick the outcomes your agent should optimize for."
+          <div className="mt-8 flex items-center justify-between">
+            <Button
+              variant="ghost"
+              onClick={back}
+              disabled={step === 0}
+              className="rounded-full font-black"
             >
-              <div className="grid gap-2 md:grid-cols-2">
-                {GOAL_KEYS.map((g) => (
-                  <label
-                    key={g}
-                    className="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-card p-3 text-sm"
-                  >
-                    <Checkbox checked={goals.includes(g)} onCheckedChange={() => toggleGoal(g)} />
-                    {GOAL_LABELS[g]}
-                  </label>
-                ))}
-              </div>
-            </Step>
-          )}
-
-          {step === 4 && (
-            <Step
-              title="Design your agent"
-              subtitle="This is who represents you in intro workflows."
-            >
-              <Field label="Agent name">
-                <Input
-                  value={agent_name}
-                  onChange={(e) => setAgentName(e.target.value)}
-                  className="rounded-xl"
-                  placeholder={`${(full_name || "Your").split(" ")[0]} Agent`}
-                />
-              </Field>
-              <Field label="Tone">
-                <Select value={tone} onValueChange={(v) => setTone(v as AgentTone)}>
-                  <SelectTrigger className="rounded-xl">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TONES.map((t) => (
-                      <SelectItem key={t} value={t}>
-                        {t}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-              <div className="rounded-2xl border border-agent/20 bg-agent-soft/40 p-4">
-                <p className="text-[11px] font-medium uppercase tracking-wide text-agent">
-                  Agent intro preview
-                </p>
-                <p className="mt-1 text-sm text-foreground">
-                  {agentPreview(full_name, tone, interests)}
-                </p>
-              </div>
-              <Button type="button" variant="outline" className="rounded-xl">
-                <Sparkles className="h-4 w-4" /> Generate My Agent
+              <ArrowLeft className="h-4 w-4" /> Back
+            </Button>
+            {step < 5 ? (
+              <Button onClick={next} className="rounded-full bg-black font-black text-white">
+                Continue <ArrowRight className="h-4 w-4" />
               </Button>
-            </Step>
-          )}
-
-          {step === 5 && (
-            <Step
-              title="Boundaries & permissions"
-              subtitle="You're always in control. Sensitive actions are off by default."
-            >
-              <div className="space-y-2">
-                <PermissionToggle
-                  label="Agent can talk to other agents"
-                  checked={perms.can_talk_to_agents}
-                  onCheckedChange={(v) => setPerms((p) => ({ ...p, can_talk_to_agents: v }))}
-                />
-                <PermissionToggle
-                  label="Agent can recommend people"
-                  checked={perms.can_recommend_people}
-                  onCheckedChange={(v) => setPerms((p) => ({ ...p, can_recommend_people: v }))}
-                />
-                <PermissionToggle
-                  label="Agent can draft intro messages"
-                  checked={perms.can_draft_messages}
-                  onCheckedChange={(v) => setPerms((p) => ({ ...p, can_draft_messages: v }))}
-                />
-                <PermissionToggle
-                  sensitive
-                  label="Agent can send messages without approval"
-                  description="Default off — we strongly recommend keeping this off."
-                  checked={perms.can_send_without_approval}
-                  onCheckedChange={(v) => setPerms((p) => ({ ...p, can_send_without_approval: v }))}
-                />
-                <PermissionToggle
-                  sensitive
-                  label="Agent can share my phone number"
-                  checked={perms.can_share_phone}
-                  onCheckedChange={(v) => setPerms((p) => ({ ...p, can_share_phone: v }))}
-                />
-                <PermissionToggle
-                  sensitive
-                  label="Agent can share my email"
-                  checked={perms.can_share_email}
-                  onCheckedChange={(v) => setPerms((p) => ({ ...p, can_share_email: v }))}
-                />
-                <PermissionToggle
-                  sensitive
-                  label="Agent can schedule meetings"
-                  checked={perms.can_schedule_meetings}
-                  onCheckedChange={(v) => setPerms((p) => ({ ...p, can_schedule_meetings: v }))}
-                />
-                <PermissionToggle
-                  sensitive
-                  label="Agent can discuss salary or finances"
-                  checked={perms.can_discuss_finances}
-                  onCheckedChange={(v) => setPerms((p) => ({ ...p, can_discuss_finances: v }))}
-                />
-                <PermissionToggle
-                  locked
-                  label="Agent can discuss private address"
-                  description="Always off. We never let your agent share this."
-                  checked={false}
-                />
-              </div>
-              <SafetyNotice>
-                Your agent will always be labeled as AI and will never pretend to be you.
-              </SafetyNotice>
-            </Step>
-          )}
-        </div>
-
-        <div className="mt-8 flex items-center justify-between">
-          <Button variant="ghost" onClick={back} disabled={step === 0} className="rounded-xl">
-            <ArrowLeft className="h-4 w-4" /> Back
-          </Button>
-          {step < 5 ? (
-            <Button onClick={next} className="rounded-xl">
-              Continue <ArrowRight className="h-4 w-4" />
-            </Button>
-          ) : (
-            <Button onClick={finish} className="rounded-xl">
-              Enter AgentCircle <ArrowRight className="h-4 w-4" />
-            </Button>
-          )}
+            ) : (
+              <Button onClick={finish} className="rounded-full bg-black font-black text-white">
+                Enter AgentCircle <ArrowRight className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>

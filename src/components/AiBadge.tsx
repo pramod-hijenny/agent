@@ -5,7 +5,7 @@ export function AiBadge({ className, label = "AI Agent" }: { className?: string;
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full bg-agent-soft px-2 py-0.5 text-[11px] font-medium text-agent",
+        "inline-flex items-center gap-1 rounded-full bg-black px-2.5 py-1 text-[11px] font-semibold text-white",
         className,
       )}
     >
@@ -19,7 +19,7 @@ export function ApprovalBadge({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full bg-safety-soft px-2 py-0.5 text-[11px] font-medium text-safety-foreground",
+        "inline-flex items-center gap-1 rounded-full bg-[#fff3d5] px-2.5 py-1 text-[11px] font-semibold text-[#a35c00]",
         className,
       )}
     >

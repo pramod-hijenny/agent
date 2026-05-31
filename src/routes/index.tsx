@@ -1,199 +1,220 @@
 import { Link } from "@/lib/navigation";
 import { Button } from "@/components/ui/button";
 import {
-  Sparkles,
-  ShieldCheck,
-  Users,
-  Briefcase,
-  CheckCircle2,
   ArrowRight,
-  Eye,
+  BadgeCheck,
+  Camera,
+  Heart,
   Lock,
   MessageCircle,
-  Handshake,
-  Lightbulb,
-  Target,
+  Play,
+  ShieldCheck,
+  Sparkles,
+  Users,
+  Zap,
 } from "lucide-react";
+
+const HERO_IMAGES = [
+  "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=85",
+  "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=700&q=85",
+  "https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=700&q=85",
+];
 
 export function Landing() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <div className="flex items-center gap-2">
-          <div
-            className="flex h-8 w-8 items-center justify-center rounded-lg"
-            style={{ background: "var(--gradient-agent)" }}
-          >
-            <Sparkles className="h-4 w-4 text-white" />
-          </div>
-          <span className="font-semibold tracking-tight">AgentCircle</span>
+    <div className="relative min-h-screen overflow-hidden bg-[#eef4ff] text-black">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,#ffb6d5_0,transparent_28rem),radial-gradient(circle_at_90%_18%,#b8e5ff_0,transparent_32rem),linear-gradient(135deg,#f8fbff,#d9e8ff_48%,#f7eefc)]" />
+      <div className="absolute inset-0 opacity-[0.22] [background-image:linear-gradient(#1f2937_1px,transparent_1px),linear-gradient(90deg,#1f2937_1px,transparent_1px)] [background-size:54px_54px]" />
+
+      <header className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-5 py-5 md:px-8">
+        <div className="flex items-center gap-3">
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-black text-white shadow-xl">
+            <Sparkles className="h-5 w-5" />
+          </span>
+          <span className="text-xl font-black tracking-tight">AgentCircle</span>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" asChild className="rounded-xl">
+          <Button asChild variant="ghost" className="rounded-full font-black">
             <Link to="/auth">Sign in</Link>
           </Button>
-          <Button asChild className="rounded-xl">
-            <Link to="/auth">Create Your Agent</Link>
+          <Button
+            asChild
+            className="rounded-full bg-black px-5 font-black text-white hover:bg-black/85"
+          >
+            <Link to="/auth">
+              Enter feed <ArrowRight className="h-4 w-4" />
+            </Link>
           </Button>
         </div>
       </header>
 
-      <section className="relative overflow-hidden">
-        <div
-          className="pointer-events-none absolute inset-0 -z-10"
-          style={{ background: "var(--gradient-hero)" }}
-        />
-        <div className="mx-auto max-w-4xl px-6 pb-20 pt-16 text-center md:pt-24">
-          <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card/80 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
-            <Sparkles className="h-3 w-3 text-agent" />
-            AI-mediated introductions for startup communities
-          </span>
-          <h1 className="mt-6 text-4xl font-semibold tracking-tight md:text-6xl">
-            Find three useful{" "}
-            <span
-              className="bg-clip-text text-transparent"
-              style={{ backgroundImage: "var(--gradient-agent)" }}
-            >
-              people to meet
-            </span>
-          </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">
-            Tell your AI who you need to meet. AgentCircle finds relevant members in your trusted
-            startup community, explains the fit, and drafts an intro both sides approve.
-          </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Button asChild size="lg" className="rounded-xl">
-              <Link to="/auth">
-                Start Matching <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="rounded-xl">
-              <Link to="/auth">View Demo</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+      <main className="relative z-10 mx-auto grid min-h-[calc(100vh-84px)] max-w-7xl items-center gap-8 px-5 pb-10 md:px-8 lg:grid-cols-[minmax(0,1fr)_520px]">
+        <section className="relative min-h-[680px] overflow-hidden rounded-[2rem] bg-black text-white shadow-[0_32px_90px_rgb(38_52_78_/_0.28)] md:rounded-[3rem]">
+          <img
+            src={HERO_IMAGES[0]}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover opacity-75"
+            loading="eager"
+            referrerPolicy="no-referrer"
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgb(0_0_0_/_0.78),rgb(0_0_0_/_0.22)_54%,rgb(0_0_0_/_0.55))]" />
+          <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-black to-transparent" />
 
-      <section className="mx-auto max-w-6xl px-6 py-16">
-        <h2 className="text-center text-2xl font-semibold tracking-tight md:text-3xl">
-          How AgentCircle works
-        </h2>
-        <div className="mt-10 grid gap-4 md:grid-cols-4">
-          {[
-            {
-              n: 1,
-              title: "Build your profile",
-              desc: "Join a trusted startup network and share what you're building.",
-            },
-            {
-              n: 2,
-              title: "Set your ask",
-              desc: "Tell your agent who you need and what you can help with.",
-            },
-            {
-              n: 3,
-              title: "Review 3 matches",
-              desc: "See role fit, skills, goals, and why each intro is useful.",
-            },
-            {
-              n: 4,
-              title: "Approve the intro",
-              desc: "Edit the draft and keep contact sharing consent-first.",
-            },
-          ].map((s) => (
-            <div
-              key={s.n}
-              className="rounded-2xl border border-border bg-card p-5"
-              style={{ boxShadow: "var(--shadow-card)" }}
-            >
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 font-semibold text-primary">
-                {s.n}
-              </div>
-              <h3 className="mt-3 font-semibold">{s.title}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">{s.desc}</p>
+          <div className="relative flex min-h-[680px] flex-col justify-between p-6 md:p-10 lg:p-12">
+            <div className="flex w-fit items-center gap-2 rounded-full border border-white/25 bg-white/15 px-4 py-2 text-sm font-black backdrop-blur-xl">
+              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#7df3c8]" />
+              AI social networking for builders
             </div>
-          ))}
-        </div>
-      </section>
 
-      <section className="mx-auto max-w-6xl px-6 py-16">
-        <h2 className="text-center text-2xl font-semibold tracking-tight md:text-3xl">
-          Built for high-intent startup networking
-        </h2>
-        <div className="mt-10 grid gap-3 md:grid-cols-5">
-          {[
-            { icon: Briefcase, label: "Founder peers" },
-            { icon: Users, label: "Cofounders" },
-            { icon: Lightbulb, label: "Mentors" },
-            { icon: Target, label: "Design partners" },
-            { icon: Handshake, label: "Advisors" },
-          ].map((u) => (
-            <div
-              key={u.label}
-              className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-5 text-center"
-              style={{ boxShadow: "var(--shadow-card)" }}
-            >
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-agent-soft text-agent">
-                <u.icon className="h-5 w-5" />
-              </span>
-              <p className="text-sm font-medium">{u.label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-6 py-16">
-        <div
-          className="rounded-3xl border border-border bg-card p-8 md:p-12"
-          style={{ boxShadow: "var(--shadow-elevated)" }}
-        >
-          <div className="flex flex-col items-start gap-6 md:flex-row md:items-center">
-            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-safety-soft text-safety-foreground">
-              <ShieldCheck className="h-6 w-6" />
-            </span>
-            <div>
-              <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
-                Built with you in control
-              </h2>
-              <p className="mt-2 text-muted-foreground">
-                Your agent never pretends to be you. Every action is approved by you.
+            <div className="max-w-3xl">
+              <h1 className="text-5xl font-black leading-[0.95] tracking-tight md:text-7xl">
+                A social feed for warm startup intros.
+              </h1>
+              <p className="mt-5 max-w-2xl text-lg font-semibold leading-8 text-white/78">
+                Browse stories, react to founder updates, discover high-fit people, and approve
+                agent-drafted intros before anyone gets contacted.
               </p>
+              <div className="mt-7 flex flex-wrap items-center gap-3">
+                <Button
+                  asChild
+                  className="h-12 rounded-full bg-white px-6 text-sm font-black text-black hover:bg-white/90"
+                >
+                  <Link to="/auth">
+                    Try live demo <Play className="h-4 w-4 fill-current" />
+                  </Link>
+                </Button>
+                <span className="inline-flex h-12 items-center gap-2 rounded-full bg-white/15 px-5 text-sm font-black backdrop-blur-xl">
+                  <ShieldCheck className="h-4 w-4" /> Human approval first
+                </span>
+              </div>
             </div>
           </div>
-          <div className="mt-8 grid gap-4 md:grid-cols-4">
+
+          <FloatingProfile />
+          <StoryPreview />
+        </section>
+
+        <section className="space-y-5">
+          <div className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_26px_80px_rgb(41_55_92_/_0.18)] backdrop-blur-xl">
+            <div className="flex items-center justify-between">
+              <h2 className="text-3xl font-black tracking-tight">What feels different</h2>
+              <Users className="h-7 w-7" />
+            </div>
+            <div className="mt-6 grid gap-3">
+              {[
+                ["Stories", "See what active members are building before you ask for an intro."],
+                [
+                  "Agent ranked matches",
+                  "Every card explains mutual value, shared context, and a first topic.",
+                ],
+                [
+                  "Approval-gated messages",
+                  "Your AI can draft, but you approve every sensitive action.",
+                ],
+              ].map(([title, desc], index) => (
+                <div key={title} className="flex gap-4 rounded-[1.4rem] bg-slate-100 p-4">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-black font-black text-white">
+                    {index + 1}
+                  </span>
+                  <div>
+                    <p className="font-black">{title}</p>
+                    <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">{desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
             {[
-              { icon: CheckCircle2, label: "Human approval required" },
-              { icon: Eye, label: "Clear AI labeling" },
-              { icon: Lock, label: "Permission controls" },
-              { icon: MessageCircle, label: "No contact sharing without consent" },
-            ].map((s) => (
+              ["24", "stories"],
+              ["3", "matches"],
+              ["6", "drafts"],
+            ].map(([value, label]) => (
               <div
-                key={s.label}
-                className="flex items-start gap-3 rounded-2xl border border-border bg-secondary/40 p-4"
+                key={label}
+                className="rounded-[1.4rem] bg-white/90 p-4 text-center shadow-[0_16px_40px_rgb(41_55_92_/_0.12)]"
               >
-                <s.icon className="mt-0.5 h-4 w-4 text-primary" />
-                <p className="text-sm font-medium">{s.label}</p>
+                <p className="text-3xl font-black">{value}</p>
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">
+                  {label}
+                </p>
               </div>
             ))}
           </div>
+
+          <div className="rounded-[2rem] bg-black p-6 text-white shadow-[0_26px_70px_rgb(0_0_0_/_0.22)]">
+            <div className="flex items-center gap-3">
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#ff78a8]">
+                <Zap className="h-6 w-6 fill-current" />
+              </span>
+              <div>
+                <p className="text-xl font-black">Live demo ready</p>
+                <p className="text-sm font-semibold text-white/60">No setup needed to preview.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}
+
+function FloatingProfile() {
+  return (
+    <div className="absolute bottom-6 right-6 hidden w-80 rounded-[1.7rem] bg-white p-4 text-black shadow-2xl md:block">
+      <div className="flex items-center gap-3">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#ff8fb3] font-black text-white">
+          M
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-black">Maya Chen</p>
+          <p className="truncate text-sm font-bold text-slate-400">Pre-seed founder</p>
         </div>
-      </section>
+        <BadgeCheck className="h-5 w-5 text-[#4aa3ff]" />
+      </div>
+      <p className="mt-4 text-sm font-semibold leading-6 text-slate-700">
+        Looking for design partners who can react to onboarding analytics.
+      </p>
+      <div className="mt-4 flex items-center gap-4 text-sm font-black text-slate-500">
+        <span className="inline-flex items-center gap-1.5">
+          <Heart className="h-4 w-4 fill-[#ff6f91] text-[#ff6f91]" /> 2.8k
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <MessageCircle className="h-4 w-4" /> 84
+        </span>
+        <span className="ml-auto rounded-full bg-black px-4 py-2 text-xs text-white">Connect</span>
+      </div>
+    </div>
+  );
+}
 
-      <section className="mx-auto max-w-3xl px-6 pb-20 pt-8 text-center">
-        <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
-          Meet the right people, on your terms.
-        </h2>
-        <p className="mt-3 text-muted-foreground">Set up your agent in under three minutes.</p>
-        <Button asChild size="lg" className="mt-6 rounded-xl">
-          <Link to="/auth">
-            Start Matching <ArrowRight className="h-4 w-4" />
-          </Link>
-        </Button>
-      </section>
-
-      <footer className="border-t border-border py-8 text-center text-xs text-muted-foreground">
-        © 2026 AgentCircle. AI-mediated introductions for startup communities.
-      </footer>
+function StoryPreview() {
+  return (
+    <div className="absolute right-6 top-24 hidden w-72 rounded-[1.7rem] border border-white/25 bg-white/18 p-4 shadow-2xl backdrop-blur-2xl xl:block">
+      <div className="flex items-center justify-between">
+        <p className="font-black">Stories</p>
+        <Camera className="h-5 w-5 text-white/75" />
+      </div>
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        {HERO_IMAGES.map((src, index) => (
+          <div key={src} className="h-28 overflow-hidden rounded-2xl">
+            <img
+              src={src}
+              alt=""
+              className="h-full w-full object-cover transition duration-500 hover:scale-110"
+              loading="lazy"
+              referrerPolicy="no-referrer"
+            />
+            <span className="-mt-8 ml-2 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[10px] font-black text-black">
+              {index + 1}
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 flex items-center gap-2 rounded-full bg-white/15 px-3 py-2 text-xs font-black">
+        <Lock className="h-3.5 w-3.5" /> Consent-first intros
+      </div>
     </div>
   );
 }

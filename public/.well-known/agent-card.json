@@ -22,9 +22,7 @@
       "name": "Persona match",
       "description": "Compares two user-approved agent personas and returns structured compatibility reasons.",
       "tags": ["social-discovery", "matching", "persona"],
-      "examples": [
-        "Compare Alex Agent with Maya Agent for a San Francisco founder coffee intro."
-      ],
+      "examples": ["Compare Alex Agent with Maya Agent for a San Francisco founder coffee intro."],
       "inputModes": ["application/json"],
       "outputModes": ["application/json"]
     },

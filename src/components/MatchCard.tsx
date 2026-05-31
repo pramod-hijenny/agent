@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Sparkles, UserPlus } from "lucide-react";
+import { BadgeCheck, MessageCircle, Sparkles, UserPlus } from "lucide-react";
 import { GradientAvatar } from "./Avatar";
 import { MatchScoreBadge } from "./MatchScoreBadge";
 import { InterestChips } from "./InterestChips";
@@ -17,49 +17,70 @@ export function MatchCard({
 }) {
   const p = match.profile;
   return (
-    <article className="overflow-hidden rounded-[1.7rem] border border-border bg-card shadow-[var(--shadow-card)]">
+    <article className="group overflow-hidden rounded-[1.25rem] bg-white shadow-[0_14px_36px_rgb(30_41_59_/_0.08)] transition duration-300 hover:-translate-y-0.5">
       <Link to="/app/profile/$id" params={{ id: p.id }} className="block">
-        <div className={`h-20 bg-gradient-to-br ${p.avatar_color}`} />
+        <div className="relative h-28 overflow-hidden">
+          <img
+            src={`https://images.unsplash.com/photo-${
+              p.id.length % 2 === 0 ? "1517245386807-bb43f82c33c4" : "1556761175-b413da4baf72"
+            }?auto=format&fit=crop&w=800&q=85`}
+            alt=""
+            className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+            loading="lazy"
+            referrerPolicy="no-referrer"
+          />
+          <div className={`absolute inset-0 bg-gradient-to-br ${p.avatar_color} opacity-45`} />
+        </div>
       </Link>
-      <div className="-mt-10 flex flex-col gap-4 p-4 pt-0">
+      <div className="-mt-9 flex flex-col gap-3 p-4 pt-0">
         <div className="flex items-end gap-3">
-          <Link to="/app/profile/$id" params={{ id: p.id }} className="rounded-full bg-card p-1">
+          <Link to="/app/profile/$id" params={{ id: p.id }} className="rounded-full bg-white p-1">
             <GradientAvatar name={p.full_name} colorClass={p.avatar_color} size="lg" />
           </Link>
           <div className="min-w-0 flex-1 pb-1">
-            <Link to="/app/profile/$id" params={{ id: p.id }} className="hover:underline">
-              <h3 className="truncate text-lg font-black text-foreground">{p.full_name}</h3>
-            </Link>
-            <p className="text-xs font-medium text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <Link to="/app/profile/$id" params={{ id: p.id }} className="hover:underline">
+                <h3 className="truncate text-lg font-bold text-black">{p.full_name}</h3>
+              </Link>
+              <BadgeCheck className="h-4 w-4 text-[#4aa3ff]" />
+            </div>
+            <p className="text-xs font-medium text-slate-400">
               {p.role} · {p.company || p.city}
             </p>
           </div>
           <MatchScoreBadge score={match.score} />
         </div>
 
-        <p className="line-clamp-2 text-sm leading-6 text-foreground/80">{p.current_ask}</p>
+        <p className="line-clamp-2 text-sm font-medium leading-6 text-slate-600">{p.current_ask}</p>
 
         <InterestChips items={p.skills.slice(0, 4)} />
 
-        <div className="rounded-2xl bg-secondary/70 p-3 text-sm text-foreground/75">
-          <span className="inline-flex items-center gap-1 font-black text-foreground">
-            <Sparkles className="h-3.5 w-3.5 text-agent" /> Why it clicks:
+        <div className="rounded-[1rem] bg-slate-100 p-3 text-sm font-medium text-slate-600">
+          <span className="inline-flex items-center gap-1 font-semibold text-black">
+            <Sparkles className="h-3.5 w-3.5" /> Why it clicks:
           </span>{" "}
           {match.why}
         </div>
 
-        <div className="rounded-2xl border border-border bg-card p-3 text-sm">
-          <p className="text-[11px] font-semibold uppercase text-muted-foreground">
+        <div className="rounded-[1rem] bg-[#eef4ff] p-3 text-sm">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
             First conversation
           </p>
-          <p className="mt-1 line-clamp-2 text-foreground/80">{match.conversationTopics[0]}</p>
+          <p className="mt-1 line-clamp-2 font-medium text-slate-700">
+            {match.conversationTopics[0]}
+          </p>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <Button size="sm" onClick={onAskAgents} className="rounded-full">
+          <Button size="sm" onClick={onAskAgents} className="rounded-full bg-black font-semibold">
             <MessageCircle className="h-4 w-4" /> Agent chat
           </Button>
-          <Button size="sm" variant="secondary" onClick={onRequestIntro} className="rounded-full">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={onRequestIntro}
+            className="rounded-full bg-slate-100 font-semibold"
+          >
             <UserPlus className="h-4 w-4" /> Intro
           </Button>
         </div>

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { AiBadge } from "@/components/AiBadge";
-import { Pause, Play, Send, Plus, Trash2 } from "lucide-react";
+import { Bot, Pause, Play, Send, Plus, Trash2, Zap } from "lucide-react";
 
 export function AgentPage() {
   const user = useUser();
@@ -28,11 +28,38 @@ export function AgentPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <h1 className="text-2xl font-semibold tracking-tight">My Agent</h1>
+    <div className="mx-auto max-w-6xl space-y-4">
+      <section className="relative overflow-hidden rounded-[1.35rem] bg-black p-4 text-white shadow-[0_16px_44px_rgb(15_23_42_/_0.18)] md:p-5">
+        <img
+          src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1200&q=85"
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover opacity-45"
+          loading="lazy"
+          referrerPolicy="no-referrer"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/75 to-black/30" />
+        <div className="relative flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur">
+              <Bot className="h-4 w-4" /> AI representative
+            </span>
+            <h1 className="mt-3 text-2xl font-bold tracking-tight md:text-3xl">My Agent</h1>
+            <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-white/70">
+              Configure the social agent that talks to other agents, remembers context, and drafts
+              intros for your approval.
+            </p>
+          </div>
+          <div className="rounded-[1.1rem] bg-white/15 p-4 backdrop-blur-xl">
+            <p className="text-xl font-bold">
+              {user.agent.status === "active" ? "Live" : "Paused"}
+            </p>
+            <p className="text-sm font-medium text-white/65">current status</p>
+          </div>
+        </div>
+      </section>
       <AgentCard profile={user} />
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <Panel title="Agent memory">
           <div className="space-y-2">
             {user.agent.memory.map((m, i) => (
@@ -207,11 +234,11 @@ export function AgentPage() {
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div
-      className="rounded-2xl border border-border bg-card p-5"
-      style={{ boxShadow: "var(--shadow-card)" }}
-    >
-      <h2 className="mb-3 font-semibold">{title}</h2>
+    <div className="rounded-[1.25rem] bg-white/90 p-4 shadow-[0_14px_36px_rgb(30_41_59_/_0.08)] backdrop-blur-xl">
+      <h2 className="mb-3 flex items-center gap-2 text-lg font-bold text-black">
+        <Zap className="h-5 w-5 fill-[#ffb020] text-[#ffb020]" />
+        {title}
+      </h2>
       {children}
     </div>
   );

@@ -91,8 +91,6 @@ Vite + React 19 + TypeScript, Tailwind v4, shadcn-style primitives over Radix, B
 | `src/lib/navigation.tsx` | Lightweight client-side router with `popstate`-based re-renders |
 | `src/lib/matching.ts` | Client-side match scoring (used against mock data) |
 | `src/lib/a2a.ts` | A2A Agent Card discovery helpers |
-| `src/lib/social-posts.ts` | `SocialPost` / `SocialSyncRun` types and InsForge queries |
-| `src/lib/rtrvr.ts` | rtrvr.ai MCP client for browser-automation social sync |
 | `src/hooks/useMediaAssets.ts` | Upload hook for InsForge Storage + `media_assets` table |
 
 ### Routing
@@ -119,8 +117,6 @@ Key tables:
 |---|---|
 | `profiles` | User profiles with agent persona info and permissions |
 | `media_assets` | File upload metadata (bucket, object key, URL, owner) |
-| `social_posts` | Social media posts synced via rtrvr.ai (LinkedIn, X, etc.) |
-| `social_sync_runs` | Audit log of each platform sync run |
 
 ### 2. FastAPI (agent orchestration)
 
@@ -288,8 +284,6 @@ All routes are served from the FastAPI backend (`backend/app/api/routes/`).
 | `VITE_INSFORGE_URL` | InsForge API base URL |
 | `VITE_INSFORGE_ANON_KEY` | InsForge anonymous JWT |
 | `VITE_API_URL` | FastAPI backend base URL (optional override) |
-| `VITE_RTRVR_API_KEY` | rtrvr.ai API key for social-post sync |
-| `VITE_RTRVR_DEVICE_ID` | rtrvr device ID (from Chrome extension popup) |
 
 ### Backend (`backend/.env`)
 

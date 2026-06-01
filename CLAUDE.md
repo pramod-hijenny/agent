@@ -27,8 +27,6 @@ Vite + React 19 + TypeScript, Tailwind v4, shadcn-style primitives over Radix, B
 - `VITE_INSFORGE_URL` — InsForge API base (e.g., `https://mep6b952.us-east.insforge.app`)
 - `VITE_INSFORGE_ANON_KEY` — Anonymous JWT key for InsForge SDK
 - `VITE_API_URL` (optional) — Override default API endpoint for backend calls
-- `VITE_RTRVR_API_KEY` — rtrvr.ai API key for browser automation; obtain by installing the rtrvr Chrome extension and copying from its popup
-- `VITE_RTRVR_DEVICE_ID` — rtrvr device ID (from the extension popup); identifies which browser instance to drive
 - These are loaded by Vite at build time; set them in `.env` before running `dev` or `build`.
 
 ### Routing & app shell
@@ -50,8 +48,6 @@ When adding a route: create the file in `src/routes/`, import it in `App.tsx`, a
 - `src/lib/matching.ts` — client-side match scoring used against mock data.
 - `src/lib/a2a.ts` — A2A Agent Card discovery helpers (agent interoperability).
 - `src/lib/mock-data.ts` — seed profiles for the prototype.
-- `src/lib/social-posts.ts` — types and queries for social media posts (`SocialPost`, `SocialSyncRun`, `Platform`); handles InsForge RLS-backed queries for LinkedIn, X/Twitter, and other platforms.
-- `src/lib/rtrvr.ts` — rtrvr.ai MCP client for browser automation; extracts social posts from open Chrome tabs via the rtrvr Chrome extension.
 
 ### UI conventions
 
@@ -67,13 +63,6 @@ When adding a route: create the file in `src/routes/`, import it in `App.tsx`, a
 - `src/components/MediaGallery.tsx` — displays uploaded files in a responsive grid with download/delete actions.
 - Files are stored in the public `uploads` bucket; accessible at `https://mep6b952.us-east.insforge.app/storage/v1/object/public/uploads/{filename}`.
 - For details, see `FILE_UPLOAD_SETUP.md`.
-
-### Social media feeds
-
-- `src/routes/app.feed.tsx` — displays the user's LinkedIn posts synced from external sources, with sync status and engagement metrics.
-- Posts are synced via rtrvr.ai browser automation (requires `VITE_RTRVR_API_KEY` and `VITE_RTRVR_DEVICE_ID`).
-- Supports multiple platforms: LinkedIn, X/Twitter, Instagram, TikTok, YouTube (expandable in `Platform` type in `social-posts.ts`).
-- Data stored in `social_posts` and `social_sync_runs` tables with RLS policies keyed to the logged-in user.
 
 ### Frontend & InsForge integration
 
@@ -108,10 +97,8 @@ Migrations live in `migrations/` and are applied via the InsForge CLI. Key table
 
 - `profiles` — user profiles with agent persona info, permissions, created/updated timestamps
 - `media_assets` — file upload metadata (bucket, object_key, owner_user_id, content_type, url)
-- `social_posts` — social media posts synced from external platforms (user_id, platform, external_post_id, engagement metrics, fetched_at); includes indexes on user+platform+date and engagement
-- `social_sync_runs` — audit log of each platform sync (status, post_count, error_message, started_at, finished_at)
 
-All tables use RLS policies keyed to `auth.uid()`; only the logged-in user can see their own data. When adding a table or modifying schema, run migrations via `insforge-cli` and update the relevant data type in TypeScript (`src/lib/types.ts` or `src/lib/social-posts.ts`).
+All tables use RLS policies keyed to `auth.uid()`; only the logged-in user can see their own data. When adding a table or modifying schema, run migrations via `insforge-cli` and update the relevant data type in TypeScript (`src/lib/types.ts`).
 
 ## Specs (`spec/`)
 

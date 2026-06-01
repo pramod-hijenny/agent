@@ -71,9 +71,3 @@ create policy "intro_requests_owner_update" on intro_requests
     auth.uid() = from_user_id or
     exists (select 1 from profiles where id = to_profile_id and user_id = auth.uid())
   );
-
--- ─── Step 4: Fix social_posts platform constraint to include 'facebook' ───────
-
-alter table social_posts drop constraint if exists social_posts_platform_check;
-alter table social_posts add constraint social_posts_platform_check
-  check (platform in ('linkedin', 'facebook', 'twitter', 'x', 'instagram', 'tiktok', 'youtube'));

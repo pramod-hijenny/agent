@@ -86,7 +86,7 @@ export function Home() {
               {DEMO_COMMUNITY.name}
             </p>
             <h1 className="mt-1 text-3xl font-bold tracking-tight text-black md:text-4xl">
-              Social feed
+              News feed
             </h1>
           </div>
           <div className="flex w-fit rounded-full bg-slate-100 p-1 text-xs font-semibold text-slate-400">

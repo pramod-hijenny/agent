@@ -3,10 +3,12 @@ import { Button } from "@/components/ui/button";
 import { GradientAvatar } from "./Avatar";
 import { AiBadge } from "./AiBadge";
 import { SafetyNotice } from "./SafetyNotice";
-import { Check, X, Sparkles } from "lucide-react";
+import { AlertCircle, Check, Loader2, Sparkles, X } from "lucide-react";
 import type { Profile } from "@/lib/types";
-import { generateTranscript, summarize, type ScoredMatch } from "@/lib/matching";
+import { summarize, type ScoredMatch } from "@/lib/matching";
 import { useEffect, useState } from "react";
+import { resumeAgentRun, startAgentRun, type AgentRun } from "@/lib/api";
+import { getInsforgeAccessToken } from "@/lib/auth";
 
 export function AgentConversationModal({
   open,
@@ -22,31 +24,81 @@ export function AgentConversationModal({
   me: Profile;
   match: ScoredMatch | null;
   query: string;
-  onApprove: () => void;
+  onApprove: (draftMessage?: string) => void;
   onReject: () => void;
 }) {
-  const [revealed, setRevealed] = useState(0);
-  const transcript = match ? generateTranscript(me, match.profile, query) : [];
+  const [run, setRun] = useState<AgentRun | null>(null);
+  const [draftMessage, setDraftMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const summary = match ? summarize(me, match.profile, match) : null;
 
   useEffect(() => {
     if (!open || !match) return;
-    setRevealed(0);
-    const id = setInterval(() => {
-      setRevealed((r) => {
-        if (r >= transcript.length) {
-          clearInterval(id);
-          return r;
+    let cancelled = false;
+    async function runAgent() {
+      setLoading(true);
+      setError("");
+      setRun(null);
+      setDraftMessage("");
+      try {
+        const token = await getInsforgeAccessToken();
+        if (!token) throw new Error("Sign in again so your agent can use your session.");
+        const threadId = `intro-${me.id}-${match.profile.id}-${Date.now()}`;
+        const nextRun = await startAgentRun(token, {
+          thread_id: threadId,
+          workflow: "intro_review",
+          state: {
+            query,
+            profile: me,
+            permissions: me.permissions,
+            candidates: [match.profile],
+          },
+        });
+        if (cancelled) return;
+        const interruptDraft = nextRun.output.__interrupt__?.[0]?.draft_message;
+        setRun(nextRun);
+        setDraftMessage(interruptDraft || nextRun.output.draft_message || "");
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Agent run failed.");
         }
-        return r + 1;
-      });
-    }, 700);
-    return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    void runAgent();
+    return () => {
+      cancelled = true;
+    };
   }, [open, match?.profile.id]);
 
   if (!match) return null;
   const other = match.profile;
+  const logs = run?.output.logs ?? [];
+  const llmError = run?.output.llm_error || run?.error;
+  const draftSource = run?.output.draft_source || "pending";
+
+  async function finishAgentRun(approved: boolean) {
+    if (!run) return;
+    setLoading(true);
+    try {
+      const token = await getInsforgeAccessToken();
+      if (token) {
+        await resumeAgentRun(token, run.thread_id, {
+          approved,
+          edited_message: draftMessage,
+        });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not finalize agent run.");
+      return;
+    } finally {
+      setLoading(false);
+    }
+    if (approved) onApprove(draftMessage);
+    else onReject();
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -97,36 +149,38 @@ export function AgentConversationModal({
             </div>
           </div>
 
-          <div className="space-y-2">
-            {transcript.slice(0, revealed).map((turn, i) => (
-              <div
-                key={i}
-                className={`flex ${turn.speaker === "user" ? "justify-start" : "justify-end"}`}
-              >
-                <div
-                  className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm font-semibold leading-6 ${
-                    turn.speaker === "user" ? "bg-slate-100 text-slate-700" : "bg-black text-white"
-                  }`}
-                >
-                  <p
-                    className={`mb-1 text-[10px] font-semibold uppercase tracking-wide ${
-                      turn.speaker === "user" ? "text-slate-400" : "text-white/55"
-                    }`}
-                  >
-                    {turn.speaker === "user" ? me.agent.agent_name : other.agent.agent_name}
-                  </p>
-                  {turn.text}
-                </div>
+          <div className="space-y-3">
+            {loading && !run && (
+              <div className="flex items-center gap-2 rounded-2xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-600">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Calling the backend agent...
+              </div>
+            )}
+            {logs.map((item) => (
+              <div key={item} className="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-medium text-slate-600">
+                {item}
               </div>
             ))}
-            {revealed < transcript.length && (
-              <p className="text-center text-xs font-semibold text-slate-400">
-                Agents are talking...
-              </p>
+            {draftMessage && (
+              <div className="rounded-[1.4rem] bg-black p-4 text-white">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-white/55">
+                    Intro draft
+                  </p>
+                  <AiBadge label={draftSource === "llm" ? "Generated by LLM" : "Fallback draft"} />
+                </div>
+                <p className="text-sm font-medium leading-6">{draftMessage}</p>
+              </div>
+            )}
+            {(error || llmError) && (
+              <div className="flex items-start gap-2 rounded-2xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>{error || llmError}</span>
+              </div>
             )}
           </div>
 
-          {summary && revealed >= transcript.length && (
+          {summary && draftMessage && (
             <div className="space-y-3 rounded-[1.5rem] bg-[#eef4ff] p-4">
               <h4 className="text-sm font-semibold text-black">Match summary</h4>
               <dl className="grid grid-cols-2 gap-3 text-sm">
@@ -145,10 +199,19 @@ export function AgentConversationModal({
           </SafetyNotice>
 
           <div className="flex flex-wrap justify-end gap-2">
-            <Button variant="ghost" onClick={onReject} className="rounded-full font-semibold">
+            <Button
+              variant="ghost"
+              onClick={() => void finishAgentRun(false)}
+              disabled={loading || !run}
+              className="rounded-full font-semibold"
+            >
               <X className="h-4 w-4" /> Reject Match
             </Button>
-            <Button onClick={onApprove} className="rounded-full bg-black font-semibold">
+            <Button
+              onClick={() => void finishAgentRun(true)}
+              disabled={loading || !draftMessage || !run}
+              className="rounded-full bg-black font-semibold"
+            >
               <Check className="h-4 w-4" /> Approve Intro
             </Button>
           </div>

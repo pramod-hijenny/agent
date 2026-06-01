@@ -7,28 +7,52 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { AiBadge } from "@/components/AiBadge";
-import { Bot, Pause, Play, Send, Plus, Trash2, Zap } from "lucide-react";
+import { Bot, Loader2, Pause, Play, Send, Plus, Trash2, Zap } from "lucide-react";
+import { testAgent } from "@/lib/api";
+import { getInsforgeAccessToken } from "@/lib/auth";
 
 export function AgentPage() {
   const user = useUser();
   const [newMem, setNewMem] = useState("");
   const [chat, setChat] = useState<{ from: "user" | "agent"; text: string }[]>([]);
   const [input, setInput] = useState("");
+  const [agentLoading, setAgentLoading] = useState(false);
   if (!user) return null;
 
-  function sendTest() {
+  async function sendTest() {
     if (!input.trim() || !user) return;
     const q = input;
     setChat((c) => [...c, { from: "user", text: q }]);
     setInput("");
-    setTimeout(() => {
-      const reply = generateAgentReply(q, user);
-      setChat((c) => [...c, { from: "agent", text: reply }]);
-    }, 500);
+    setAgentLoading(true);
+    try {
+      const token = await getInsforgeAccessToken();
+      if (!token) throw new Error("Sign in again so your agent can use your session.");
+      const result = await testAgent(token, {
+        message: q,
+        state: {
+          profile: user,
+          permissions: user.permissions,
+        },
+      });
+      const suffix =
+        result.source === "llm" ? "" : result.error ? `\n\nBackend note: ${result.error}` : "";
+      setChat((c) => [...c, { from: "agent", text: `${result.reply}${suffix}` }]);
+    } catch (err) {
+      setChat((c) => [
+        ...c,
+        {
+          from: "agent",
+          text: err instanceof Error ? err.message : "Agent backend did not respond.",
+        },
+      ]);
+    } finally {
+      setAgentLoading(false);
+    }
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4">
+    <div className="w-full space-y-4">
       <section className="relative overflow-hidden rounded-[1.35rem] bg-black p-4 text-white shadow-[0_16px_44px_rgb(15_23_42_/_0.18)] md:p-5">
         <img
           src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1200&q=85"
@@ -177,16 +201,24 @@ export function AgentPage() {
                 </div>
               </div>
             ))}
+            {agentLoading && (
+              <div className="flex justify-start">
+                <div className="inline-flex items-center gap-2 rounded-2xl bg-agent-soft px-3 py-2 text-sm font-medium">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Agent is thinking...
+                </div>
+              </div>
+            )}
           </div>
           <div className="mt-3 flex gap-2">
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && sendTest()}
+              onKeyDown={(e) => e.key === "Enter" && void sendTest()}
               placeholder="Ask your agent…"
               className="rounded-xl"
             />
-            <Button onClick={sendTest} className="rounded-xl">
+            <Button onClick={() => void sendTest()} disabled={agentLoading} className="rounded-xl">
               <Send className="h-4 w-4" />
             </Button>
           </div>
@@ -242,18 +274,4 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
       {children}
     </div>
   );
-}
-
-function generateAgentReply(
-  q: string,
-  user: { full_name: string; city: string; interests: string[]; agent: { agent_name: string } },
-) {
-  const lower = q.toLowerCase();
-  if (lower.includes("introduce")) {
-    return `Hi — I'm ${user.agent.agent_name}, the AI representative for ${user.full_name}. I help ${user.full_name.split(" ")[0]} find compatible people in ${user.city}. I only share what they approve.`;
-  }
-  if (lower.includes("find") || lower.includes("san francisco") || lower.includes("recommend")) {
-    return `Based on ${user.full_name.split(" ")[0]}'s interests (${user.interests.slice(0, 3).join(", ").toLowerCase()}), I'd recommend Maya Chen, Sofia Alvarez, and Omar Williams. Want me to prepare a compatibility review with one of their agents? Human approval required before any intro.`;
-  }
-  return `Got it. I'll factor that in when matching people. Anything you'd like me to keep private?`;
 }

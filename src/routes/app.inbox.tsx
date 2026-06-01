@@ -1,4 +1,5 @@
 import { useIntros, updateIntro, useUser } from "@/lib/store";
+import { patchIntroStatus } from "@/lib/auth";
 import { getSeedProfile } from "@/lib/mock-data";
 import { GradientAvatar } from "@/components/Avatar";
 import { AiBadge, ApprovalBadge } from "@/components/AiBadge";
@@ -10,8 +11,26 @@ export function InboxPage() {
   const intros = useIntros();
   if (!user) return null;
 
+  async function handleApprove(id: string) {
+    try {
+      await patchIntroStatus(id, "accepted");
+    } catch {
+      // best-effort; local state still updates
+    }
+    updateIntro(id, (i) => ({ ...i, status: "accepted" }));
+  }
+
+  async function handleReject(id: string) {
+    try {
+      await patchIntroStatus(id, "withdrawn");
+    } catch {
+      // best-effort; local state still updates
+    }
+    updateIntro(id, (i) => ({ ...i, status: "withdrawn" }));
+  }
+
   return (
-    <div className="mx-auto max-w-5xl space-y-4">
+    <div className="w-full space-y-4">
       <section className="relative overflow-hidden rounded-[1.35rem] bg-black p-4 text-white shadow-[0_16px_44px_rgb(15_23_42_/_0.18)] md:p-5">
         <img
           src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1200&q=85"
@@ -82,9 +101,7 @@ export function InboxPage() {
                         <Button
                           size="sm"
                           className="rounded-full bg-black font-semibold"
-                          onClick={() =>
-                            updateIntro(intro.id, (i) => ({ ...i, status: "accepted" }))
-                          }
+                          onClick={() => handleApprove(intro.id)}
                         >
                           <Check className="h-4 w-4" /> Mark accepted
                         </Button>
@@ -92,9 +109,7 @@ export function InboxPage() {
                           size="sm"
                           variant="secondary"
                           className="rounded-full bg-slate-100 font-semibold"
-                          onClick={() =>
-                            updateIntro(intro.id, (i) => ({ ...i, status: "withdrawn" }))
-                          }
+                          onClick={() => handleReject(intro.id)}
                         >
                           <X className="h-4 w-4" /> Withdraw
                         </Button>

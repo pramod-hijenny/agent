@@ -2,11 +2,11 @@
   "protocolVersion": "1.0",
   "name": "AgentCircle Social Representative",
   "description": "Discovers compatible human connections, compares agent personas, drafts consent-first introductions, and keeps the user in control of contact sharing.",
-  "url": "https://agentcircle.example.com/a2a",
+  "url": "http://localhost:8000/a2a/v1",
   "version": "0.1.0",
   "provider": {
     "organization": "AgentCircle",
-    "url": "https://agentcircle.example.com"
+    "url": "http://localhost:8000"
   },
   "capabilities": {
     "streaming": false,
@@ -40,7 +40,7 @@
   ],
   "supportedInterfaces": [
     {
-      "url": "https://agentcircle.example.com/a2a/v1",
+      "url": "http://localhost:8000/a2a/v1",
       "protocolBinding": "HTTP+JSON",
       "protocolVersion": "1.0"
     }

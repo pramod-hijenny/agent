@@ -1,8 +1,11 @@
+import logging
 from typing import TypedDict
 
 from langchain.agents import create_agent
 
 from app.agents.llm import get_openai_chat_model
+
+logger = logging.getLogger(__name__)
 
 
 class AgentWorkflowState(TypedDict, total=False):
@@ -18,6 +21,15 @@ class AgentWorkflowState(TypedDict, total=False):
     persona_prompt: str
     memory: list[str]
     logs: list[str]
+    draft_source: str
+    llm_error: str
+    __interrupt__: list[dict]
+
+
+class IntroDraftResult(TypedDict):
+    message: str
+    draft_source: str
+    llm_error: str
 
 
 _RUN_MEMORY: dict[str, AgentWorkflowState] = {}
@@ -94,10 +106,14 @@ def draft_intro_with_langchain(
     target: dict,
     persona_prompt: str,
     fallback_message: str,
-) -> str:
+) -> IntroDraftResult:
     model = get_openai_chat_model()
     if not model:
-        return fallback_message
+        return {
+            "message": fallback_message,
+            "draft_source": "fallback",
+            "llm_error": "OPENAI_API_KEY or OPENAI_MODEL is not configured",
+        }
 
     try:
         agent = create_agent(model=model, tools=[], system_prompt=persona_prompt)
@@ -118,21 +134,37 @@ def draft_intro_with_langchain(
         )
         messages = result.get("messages", [])
         if not messages:
-            return fallback_message
+            return {
+                "message": fallback_message,
+                "draft_source": "fallback",
+                "llm_error": "LangChain agent returned no messages",
+            }
         content = getattr(messages[-1], "content", "")
-        return str(content).strip() or fallback_message
-    except Exception:
-        return fallback_message
+        message = str(content).strip()
+        if message:
+            return {"message": message, "draft_source": "llm", "llm_error": ""}
+        return {
+            "message": fallback_message,
+            "draft_source": "fallback",
+            "llm_error": "LangChain agent returned an empty message",
+        }
+    except Exception as exc:
+        logger.exception("LangChain intro draft failed")
+        return {
+            "message": fallback_message,
+            "draft_source": "fallback",
+            "llm_error": str(exc),
+        }
 
 
-def draft_intro(state: AgentWorkflowState, persona_prompt: str) -> str:
+def draft_intro(state: AgentWorkflowState, persona_prompt: str) -> IntroDraftResult:
     permissions = state.get("permissions", {})
     if not permissions.get("can_draft_messages", True):
-        return ""
+        return {"message": "", "draft_source": "disabled", "llm_error": ""}
 
     matches = state.get("matches", [])
     if not matches:
-        return ""
+        return {"message": "", "draft_source": "none", "llm_error": ""}
 
     profile = state.get("profile", {})
     target = matches[0]["profile"]
@@ -142,6 +174,54 @@ def draft_intro(state: AgentWorkflowState, persona_prompt: str) -> str:
         f"conversation around {shared}. Would you be open to an intro?"
     )
     return draft_intro_with_langchain(profile, target, persona_prompt, fallback_message)
+
+
+def generate_agent_reply(state: AgentWorkflowState, message: str) -> IntroDraftResult:
+    profile = state.get("profile", {})
+    persona_prompt = build_persona_prompt(
+        profile,
+        state.get("permissions", {}),
+        load_memory(profile),
+    )
+    model = get_openai_chat_model()
+    fallback = (
+        "I can help with matching, intro drafts, and privacy-safe recommendations once the "
+        "agent model is available."
+    )
+    if not model:
+        return {
+            "message": fallback,
+            "draft_source": "fallback",
+            "llm_error": "OPENAI_API_KEY or OPENAI_MODEL is not configured",
+        }
+    try:
+        agent = create_agent(model=model, tools=[], system_prompt=persona_prompt)
+        result = agent.invoke(
+            {
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": (
+                            "Answer as the user's social representative in under 80 words. "
+                            "Do not claim to send messages or share contact details.\n\n"
+                            f"User message: {message}"
+                        ),
+                    }
+                ]
+            }
+        )
+        messages = result.get("messages", [])
+        content = str(getattr(messages[-1], "content", "")).strip() if messages else ""
+        if content:
+            return {"message": content, "draft_source": "llm", "llm_error": ""}
+        return {
+            "message": fallback,
+            "draft_source": "fallback",
+            "llm_error": "LangChain agent returned an empty message",
+        }
+    except Exception as exc:
+        logger.exception("LangChain agent test reply failed")
+        return {"message": fallback, "draft_source": "fallback", "llm_error": str(exc)}
 
 
 def start_agent_workflow(thread_id: str, state: AgentWorkflowState) -> AgentWorkflowState:
@@ -162,8 +242,11 @@ def start_agent_workflow(thread_id: str, state: AgentWorkflowState) -> AgentWork
             "scored candidates",
         ],
     }
-    draft_message = draft_intro(next_state, persona_prompt)
+    draft = draft_intro(next_state, persona_prompt)
+    draft_message = draft["message"]
     next_state["draft_message"] = draft_message
+    next_state["draft_source"] = draft["draft_source"]
+    next_state["llm_error"] = draft["llm_error"]
 
     if draft_message:
         next_state["logs"] = [*next_state["logs"], "drafted intro for human approval"]
@@ -181,8 +264,12 @@ def start_agent_workflow(thread_id: str, state: AgentWorkflowState) -> AgentWork
     return next_state
 
 
-def resume_agent_workflow(thread_id: str, decision: dict) -> AgentWorkflowState:
-    state = _RUN_MEMORY.get(thread_id, {})
+def resume_agent_workflow(
+    thread_id: str,
+    decision: dict,
+    stored_state: AgentWorkflowState | None = None,
+) -> AgentWorkflowState:
+    state = _RUN_MEMORY.get(thread_id) or stored_state or {}
     approved = bool(decision.get("approved"))
     edited_message = decision.get("edited_message") or state.get("draft_message", "")
     updated: AgentWorkflowState = {

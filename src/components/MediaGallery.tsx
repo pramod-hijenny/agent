@@ -1,34 +1,30 @@
-import { useMediaAssets } from '@/hooks/useMediaAssets'
-import { X, Download } from 'lucide-react'
-import { useState } from 'react'
+import { useMediaAssets } from "@/hooks/useMediaAssets";
+import { X, Download } from "lucide-react";
+import { useState } from "react";
 
 export function MediaGallery() {
-  const { files, loading, deleteFile } = useMediaAssets()
-  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const { files, loading, deleteFile } = useMediaAssets();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   if (loading) {
-    return <div className="text-center py-8">Loading files...</div>
+    return <div className="text-center py-8">Loading files...</div>;
   }
 
   if (files.length === 0) {
-    return (
-      <div className="text-center py-12 text-gray-500">
-        No files uploaded yet
-      </div>
-    )
+    return <div className="text-center py-12 text-gray-500">No files uploaded yet</div>;
   }
 
   const handleDelete = async (id: string, objectKey: string) => {
-    setDeletingId(id)
+    setDeletingId(id);
     try {
-      await deleteFile(id, objectKey)
+      await deleteFile(id, objectKey);
     } finally {
-      setDeletingId(null)
+      setDeletingId(null);
     }
-  }
+  };
 
-  const isImage = (contentType: string) => contentType.startsWith('image/')
-  const isPdf = (contentType: string) => contentType === 'application/pdf'
+  const isImage = (contentType: string) => contentType.startsWith("image/");
+  const isPdf = (contentType: string) => contentType === "application/pdf";
 
   return (
     <div className="space-y-4">
@@ -77,7 +73,7 @@ export function MediaGallery() {
 
             {/* File info */}
             <p className="text-xs text-gray-600 mt-2 truncate">
-              {file.object_key.split('-').slice(1).join('-')}
+              {file.object_key.split("-").slice(1).join("-")}
             </p>
             <p className="text-xs text-gray-400">
               {new Date(file.created_at).toLocaleDateString()}
@@ -86,5 +82,5 @@ export function MediaGallery() {
         ))}
       </div>
     </div>
-  )
+  );
 }

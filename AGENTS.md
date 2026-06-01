@@ -46,6 +46,7 @@ Pull requests should include a short summary, verification steps, and screenshot
 Keep secrets out of source files. Use environment variables for runtime configuration and review `wrangler.jsonc` before deployment-related changes. Avoid editing generated or build output directories such as `dist`, `.output`, and `.vinxi`.
 
 <!-- INSFORGE:START -->
+
 ## InsForge backend
 
 This project uses [InsForge](https://insforge.dev): an all-in-one, open-source Postgres-based backend (BaaS) that gives this app a database, authentication, file storage, edge functions, realtime, an AI model gateway, and payments through one platform.

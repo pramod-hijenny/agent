@@ -14,10 +14,10 @@ import {
   Users,
 } from "lucide-react";
 import { useState } from "react";
-import { getUser, setAuth, setIntros, setUser } from "@/lib/store";
-import { devLogin, getMe, hasApi, listIntros } from "@/lib/api";
+import { setAuth, setIntros, setUser } from "@/lib/store";
 import { SEED_PROFILES } from "@/lib/mock-data";
 import type { IntroRequest, Profile } from "@/lib/types";
+import { signIn, signUp, verifyEmailCode, fetchMyProfile } from "@/lib/auth";
 
 const SOCIAL_IMAGES = [
   "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=85",
@@ -38,32 +38,48 @@ export function AuthPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [code, setCode] = useState("");
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!email) return;
+    if (!email || !password) return;
     setSubmitting(true);
     setError("");
     try {
-      if (hasApi()) {
-        const token = await devLogin(email);
-        setAuth({ email, token });
-        const profile = await getMe(token);
-        const hasOnboarded = Boolean(profile.full_name && profile.current_ask);
-        if (hasOnboarded) {
-          setUser(profile);
-          listIntros(token)
-            .then(setIntros)
-            .catch(() => setIntros([]));
+      if (mode === "signup") {
+        const result = await signUp(email, password);
+        if (result?.requireEmailVerification) {
+          setVerifying(true);
+        } else if (result?.accessToken) {
+          navigate({ to: "/onboarding" });
         }
-        navigate({ to: hasOnboarded ? "/app/home" : "/onboarding" });
-        return;
+      } else {
+        await signIn(email, password);
+        const profile = await fetchMyProfile();
+        if (profile && profile.full_name && profile.current_ask) {
+          setUser(profile);
+          navigate({ to: "/app/home" });
+        } else {
+          navigate({ to: "/onboarding" });
+        }
       }
-      setAuth({ email });
-      const existing = getUser();
-      navigate({ to: existing ? "/app/home" : "/onboarding" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not sign in");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function submitCode(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    setError("");
+    try {
+      await verifyEmailCode(email, code);
+      navigate({ to: "/onboarding" });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Invalid or expired code");
     } finally {
       setSubmitting(false);
     }
@@ -259,51 +275,90 @@ export function AuthPage() {
             networking agent.
           </p>
 
-          <form onSubmit={submit} className="mt-7 space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="font-black">
-                Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="h-13 rounded-2xl border-slate-200 bg-slate-50 px-4 text-base font-semibold"
-                placeholder="you@example.com"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password" className="font-black">
-                Password
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="h-13 rounded-2xl border-slate-200 bg-slate-50 px-4 text-base font-semibold"
-                placeholder="Password"
-              />
-            </div>
-            {error && <p className="text-sm font-semibold text-destructive">{error}</p>}
-            <Button
-              type="submit"
-              className="h-13 w-full rounded-2xl bg-black text-base font-black text-white hover:bg-black/85"
-              disabled={submitting}
-            >
-              {submitting ? "Connecting..." : "Enter the feed"}
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-            <button
-              type="button"
-              onClick={loginDemo}
-              className="flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-slate-100 text-base font-black text-black transition hover:-translate-y-0.5 hover:bg-slate-200"
-            >
-              Use demo account <Play className="h-4 w-4 fill-current" />
-            </button>
-          </form>
+          {verifying ? (
+            <form onSubmit={submitCode} className="mt-7 space-y-4">
+              <p className="text-sm font-semibold text-slate-600">
+                We sent a 6-digit code to <strong>{email}</strong>. Enter it below.
+              </p>
+              <div className="space-y-2">
+                <Label htmlFor="code" className="font-black">
+                  Verification code
+                </Label>
+                <Input
+                  id="code"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  required
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+                  className="h-13 rounded-2xl border-slate-200 bg-slate-50 px-4 text-center text-2xl font-black tracking-[0.5em]"
+                  placeholder="000000"
+                />
+              </div>
+              {error && <p className="text-sm font-semibold text-destructive">{error}</p>}
+              <Button
+                type="submit"
+                className="h-13 w-full rounded-2xl bg-black text-base font-black text-white hover:bg-black/85"
+                disabled={submitting}
+              >
+                {submitting ? "Verifying..." : "Verify email"}
+              </Button>
+              <button
+                type="button"
+                onClick={() => setVerifying(false)}
+                className="w-full text-center text-sm font-semibold text-slate-500 hover:text-black"
+              >
+                Back to sign up
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={submit} className="mt-7 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="font-black">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-13 rounded-2xl border-slate-200 bg-slate-50 px-4 text-base font-semibold"
+                  placeholder="you@example.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="font-black">
+                  Password
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="h-13 rounded-2xl border-slate-200 bg-slate-50 px-4 text-base font-semibold"
+                  placeholder="Password"
+                />
+              </div>
+              {error && <p className="text-sm font-semibold text-destructive">{error}</p>}
+              <Button
+                type="submit"
+                className="h-13 w-full rounded-2xl bg-black text-base font-black text-white hover:bg-black/85"
+                disabled={submitting}
+              >
+                {submitting ? "Connecting..." : "Enter the feed"}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+              <button
+                type="button"
+                onClick={loginDemo}
+                className="flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-slate-100 text-base font-black text-black transition hover:-translate-y-0.5 hover:bg-slate-200"
+              >
+                Use demo account <Play className="h-4 w-4 fill-current" />
+              </button>
+            </form>
+          )}
 
           <div className="mt-5 grid grid-cols-3 gap-2">
             {["Stories", "Matches", "Messages"].map((item) => (

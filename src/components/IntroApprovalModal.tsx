@@ -13,19 +13,21 @@ export function IntroApprovalModal({
   onOpenChange,
   me,
   match,
+  initialMessage,
   onSend,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   me: Profile;
   match: ScoredMatch | null;
+  initialMessage?: string;
   onSend: (message: string) => void;
 }) {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    if (open && match) setMessage(suggestIntroMessage(me, match.profile, match));
-  }, [open, match, me]);
+    if (open && match) setMessage(initialMessage || suggestIntroMessage(me, match.profile, match));
+  }, [open, match, me, initialMessage]);
 
   if (!match) return null;
   const other = match.profile;

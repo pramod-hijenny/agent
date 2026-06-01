@@ -35,7 +35,7 @@ export function ProfilePage() {
   const mutuals = SEED_PROFILES.filter((p) => p.id !== profile.id).slice(0, 6);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4">
+    <div className="w-full space-y-4">
       <section className="overflow-hidden rounded-[1.35rem] bg-white shadow-[0_16px_44px_rgb(30_41_59_/_0.1)]">
         <div className="relative h-40 overflow-hidden bg-black md:h-44">
           <img

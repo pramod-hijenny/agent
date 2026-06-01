@@ -12,4 +12,6 @@ def get_openai_chat_model() -> ChatOpenAI | None:
         base_url=settings.openai_base_url,
         model=settings.openai_model,
         temperature=0.4,
+        timeout=settings.openai_timeout_seconds,
+        max_retries=1,
     )

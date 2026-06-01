@@ -12,6 +12,7 @@ import { InboxPage } from "@/routes/app.inbox";
 import { Connections } from "@/routes/app.connections";
 import { Settings } from "@/routes/app.settings";
 import { ProfilePage } from "@/routes/app.profile.$id";
+import { FeedPage } from "@/routes/app.feed";
 
 const TITLES: Record<string, string> = {
   "/": "AgentCircle - AI networking for startup communities",
@@ -22,6 +23,7 @@ const TITLES: Record<string, string> = {
   "/app/agent": "My Agent - AgentCircle",
   "/app/inbox": "Inbox - AgentCircle",
   "/app/connections": "Connections - AgentCircle",
+  "/app/feed": "Social feed - AgentCircle",
   "/app/settings": "Settings - AgentCircle",
 };
 
@@ -67,6 +69,7 @@ function renderAppRoute(pathname: string) {
   if (pathname === "/app/agent") return <AgentPage />;
   if (pathname === "/app/inbox") return <InboxPage />;
   if (pathname === "/app/connections") return <Connections />;
+  if (pathname === "/app/feed") return <FeedPage />;
   if (pathname === "/app/settings") return <Settings />;
 
   const profileMatch = pathname.match(/^\/app\/profile\/([^/]+)$/);

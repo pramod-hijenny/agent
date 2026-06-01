@@ -13,23 +13,23 @@
  *    <MediaGallery />
  */
 
-import { FileUpload } from './FileUpload'
-import { MediaGallery } from './MediaGallery'
-import { useState } from 'react'
+import { FileUpload } from "./FileUpload";
+import { MediaGallery } from "./MediaGallery";
+import { useState } from "react";
 
 export function FileUploadExample() {
-  const [refreshKey, setRefreshKey] = useState(0)
+  const [refreshKey, setRefreshKey] = useState(0);
 
   return (
     <div className="space-y-8 p-6 max-w-4xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold mb-4">File Management</h1>
-        <FileUpload onUploadComplete={() => setRefreshKey(k => k + 1)} />
+        <FileUpload onUploadComplete={() => setRefreshKey((k) => k + 1)} />
       </div>
 
       <div key={refreshKey}>
         <MediaGallery />
       </div>
     </div>
-  )
+  );
 }

@@ -181,7 +181,7 @@ export function Home() {
         />
       </section>
 
-      <aside className="space-y-5 xl:block">
+      <aside className="sticky top-6 h-fit space-y-5 hidden xl:block">
         <section className="rounded-[1.35rem] bg-black p-4 text-white shadow-[0_16px_38px_rgb(15_23_42_/_0.18)]">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold tracking-tight">Live now</h2>

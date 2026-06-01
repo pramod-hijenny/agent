@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import agents, auth, communities, conversations, discover, intros, me, profiles, ws
+from app.api.routes import a2a, agents, auth, communities, conversations, discover, intros, me, profiles, ws
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -31,3 +31,4 @@ app.include_router(intros.router)
 app.include_router(conversations.router)
 app.include_router(agents.router)
 app.include_router(ws.router)
+app.include_router(a2a.router)

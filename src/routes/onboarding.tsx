@@ -18,9 +18,9 @@ import {
 import { SafetyNotice } from "@/components/SafetyNotice";
 import { ALL_INTERESTS, ALL_SKILLS, DEFAULT_PERMISSIONS, GOAL_LABELS } from "@/lib/types";
 import type { AgentTone, Goal, Profile } from "@/lib/types";
-import { getAuth, setUser } from "@/lib/store";
+import { setUser } from "@/lib/store";
 import { DEMO_COMMUNITY } from "@/lib/mock-data";
-import { hasApi, submitOnboarding } from "@/lib/api";
+import { saveProfile } from "@/lib/auth";
 import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 
 const TONES: AgentTone[] = ["Friendly", "Professional", "Direct", "Warm", "Curious"];
@@ -101,18 +101,13 @@ export function Onboarding() {
       },
       permissions: perms,
     };
-    const auth = getAuth();
-    if (hasApi() && auth?.token) {
-      try {
-        const saved = await submitOnboarding(auth.token, profile);
-        setUser(saved);
-        navigate({ to: "/app/home" });
-        return;
-      } catch {
-        // Keep local demo mode usable even if the API is not running.
-      }
+    try {
+      const saved = await saveProfile(profile);
+      setUser(saved);
+    } catch {
+      // Fallback: keep local demo mode usable even if not authenticated.
+      setUser(profile);
     }
-    setUser(profile);
     navigate({ to: "/app/home" });
   }
 

@@ -12,6 +12,41 @@ interface TokenResponse {
 
 type ApiIntro = Omit<IntroRequest, "created_at"> & { created_at: string };
 
+export interface AgentRun {
+  id: string;
+  workflow: string;
+  status: "queued" | "waiting_for_approval" | "completed" | "failed";
+  thread_id: string;
+  input: Record<string, unknown>;
+  output: AgentRunOutput;
+  error: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AgentRunOutput {
+  draft_message?: string;
+  draft_source?: "llm" | "fallback" | "disabled" | "none" | string;
+  llm_error?: string;
+  logs?: string[];
+  matches?: Array<{
+    profile: Profile;
+    score: number;
+    reasons: string[];
+  }>;
+  __interrupt__?: Array<{
+    action: string;
+    draft_message?: string;
+    matches?: unknown[];
+  }>;
+}
+
+export interface AgentTestReply {
+  reply: string;
+  source: string;
+  error: string;
+}
+
 async function request<T>(
   path: string,
   options: RequestInit & { token?: string } = {},
@@ -117,6 +152,40 @@ export function patchIntro(token: string, id: string, status: IntroRequest["stat
     method: "PATCH",
     body: JSON.stringify({ status }),
   }).then(fromApiIntro);
+}
+
+export function startAgentRun(
+  token: string,
+  payload: { thread_id: string; workflow?: string; state: Record<string, unknown> },
+) {
+  return request<AgentRun>("/agents/runs", {
+    token,
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function resumeAgentRun(
+  token: string,
+  threadId: string,
+  decision: { approved: boolean; edited_message?: string },
+) {
+  return request<AgentRun>(`/agents/runs/${threadId}/resume`, {
+    token,
+    method: "POST",
+    body: JSON.stringify({ decision }),
+  });
+}
+
+export function testAgent(
+  token: string,
+  payload: { message: string; state: Record<string, unknown> },
+) {
+  return request<AgentTestReply>("/agents/test", {
+    token,
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
 function fromApiIntro(intro: ApiIntro): IntroRequest {

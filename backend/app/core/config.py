@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     openai_base_url: str = "https://api.tokenrouter.com/v1"
     openai_model: str = ""
+    openai_timeout_seconds: float = 30.0
+
+    insforge_url: str = "https://mep6b952.us-east.insforge.app"
+
+    public_base_url: str = "http://localhost:8000"
 
     @property
     def cors_origins(self) -> list[str | AnyUrl]:

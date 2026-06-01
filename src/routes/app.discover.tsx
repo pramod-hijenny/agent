@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useAuthState, useUser, addIntro } from "@/lib/store";
+import { useUser, addIntro } from "@/lib/store";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -9,100 +9,97 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Camera, Compass, MapPin, Search, ShieldCheck, Sparkles, Users, Zap } from "lucide-react";
+import { Camera, Compass, MapPin, Search, ShieldCheck, Zap } from "lucide-react";
 import { scoreMatches, type ScoredMatch } from "@/lib/matching";
 import { MatchCard } from "@/components/MatchCard";
 import { AgentConversationModal } from "@/components/AgentConversationModal";
 import { IntroApprovalModal } from "@/components/IntroApprovalModal";
-import type { Goal } from "@/lib/types";
+import type { Goal, Profile } from "@/lib/types";
 import { toast } from "sonner";
 import { DEMO_COMMUNITY } from "@/lib/mock-data";
-import { createIntro, discover as apiDiscover, hasApi } from "@/lib/api";
+import { fetchAllProfiles, createIntroRequest } from "@/lib/auth";
 
 export function Discover() {
   const user = useUser();
-  const auth = useAuthState();
-  const [query, setQuery] = useState(
-    "Find me three AI founders or mentors in SF who can give feedback on my B2B onboarding flow.",
-  );
+  const defaultQuery =
+    "Find me three AI founders or mentors in SF who can give feedback on my B2B onboarding flow.";
+  const [draftQuery, setDraftQuery] = useState(defaultQuery);
+  const [query, setQuery] = useState(defaultQuery);
   const [city, setCity] = useState("San Francisco");
   const [goal, setGoal] = useState<Goal | "any">("any");
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [convoMatch, setConvoMatch] = useState<ScoredMatch | null>(null);
   const [introMatch, setIntroMatch] = useState<ScoredMatch | null>(null);
-  const [remoteMatches, setRemoteMatches] = useState<ScoredMatch[] | null>(null);
+  const [agentDraftMessage, setAgentDraftMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  // insforgeProfiles holds real backend profiles; loaded for future scoring integration
+  const [insforgeProfiles, setInsforgeProfiles] = useState<Profile[]>([]);
 
-  const localMatches = useMemo(
+  // Load real profiles from InsForge (excluding current user)
+  useEffect(() => {
+    setLoading(true);
+    fetchAllProfiles()
+      .then((profiles) => {
+        const others = profiles.filter((p) => p.user_id !== user?.user_id);
+        setInsforgeProfiles(others);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [user?.user_id]);
+
+  const matches = useMemo(
     () => (user ? scoreMatches(user, { city, goal, query, limit: 4 }) : []),
     [user, city, goal, query],
   );
-  const matches = remoteMatches ?? localMatches;
-
-  useEffect(() => {
-    if (!user || !auth?.token || !hasApi()) return;
-    let cancelled = false;
-    setLoading(true);
-    apiDiscover(auth.token, { city, goal, query, limit: 4 })
-      .then((items) => {
-        if (cancelled) return;
-        setRemoteMatches(
-          items.map((item) => ({
-            profile: item.profile,
-            score: item.score,
-            sharedInterests: item.profile.interests.filter((interest) =>
-              user.interests.map((value) => value.toLowerCase()).includes(interest.toLowerCase()),
-            ),
-            complementarySkills: item.profile.skills,
-            sharedGoals: item.profile.goals.filter((matchGoal) => user.goals.includes(matchGoal)),
-            why: item.reasons.join(" · "),
-            conversationTopics: [user.current_ask, item.profile.offering, item.suggested_activity],
-          })),
-        );
-      })
-      .catch(() => setRemoteMatches(null))
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [auth?.token, city, goal, query, user]);
 
   if (!user) return null;
 
+  function findMatches() {
+    const nextQuery = draftQuery.trim();
+    setQuery(nextQuery || defaultQuery);
+    if (!nextQuery) setDraftQuery(defaultQuery);
+  }
+
   async function sendIntro(message: string) {
     if (!introMatch) return;
-    const intro = {
-      id: crypto.randomUUID(),
-      from_user_id: user!.id,
-      to_user_id: introMatch.profile.user_id || introMatch.profile.id,
-      message,
-      status: "pending",
-      created_at: Date.now(),
-    } as const;
-    if (hasApi() && auth?.token) {
-      try {
-        const saved = await createIntro(auth.token, {
-          to_user_id: intro.to_user_id,
-          message,
-          transcript: [],
-          summary: {},
-        });
-        addIntro(saved);
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Intro could not be sent");
-        return;
-      }
-    } else {
+    const toProfileId = introMatch.profile.id;
+    const firstName = introMatch.profile.full_name.split(" ")[0];
+    try {
+      const intro = await createIntroRequest({
+        to_profile_id: toProfileId,
+        message,
+        transcript: introMatch.conversationTopics
+          ? introMatch.conversationTopics.map((t) => ({ speaker: "user" as const, text: t }))
+          : undefined,
+        summary: {
+          match_strength:
+            introMatch.score >= 80 ? "Strong" : introMatch.score >= 65 ? "Good" : "Light",
+          best_connection_type: introMatch.why || "",
+          mutual_value: introMatch.profile.offering || "",
+          conversation_starter: introMatch.conversationTopics?.[0] || message,
+          suggested_activity: introMatch.profile.availability || "",
+        },
+      });
       addIntro(intro);
+    } catch {
+      // Fallback to local only
+      const localIntro = {
+        id: crypto.randomUUID(),
+        from_user_id: user!.id,
+        to_user_id: toProfileId,
+        message,
+        status: "pending" as const,
+        created_at: Date.now(),
+      };
+      addIntro(localIntro);
     }
     setIntroMatch(null);
-    toast.success(`Intro request sent to ${introMatch.profile.full_name.split(" ")[0]}`);
+    setAgentDraftMessage("");
+    toast.success(`Intro request sent to ${firstName}`);
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4">
+    <div className="w-full space-y-4">
       <section className="relative overflow-hidden rounded-[1.35rem] bg-black p-4 text-white shadow-[0_16px_44px_rgb(15_23_42_/_0.18)] md:p-5">
         <img
           src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&q=85"
@@ -143,15 +140,28 @@ export function Discover() {
       </section>
 
       <section className="rounded-[1.35rem] border border-white/80 bg-white/90 p-4 shadow-[0_14px_36px_rgb(41_55_92_/_0.1)] backdrop-blur-xl">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+              Search request
+            </p>
+            <p className="text-sm font-medium text-slate-500">Matching brief</p>
+          </div>
+          <span className="rounded-full bg-[#e8fff6] px-3 py-1 text-xs font-semibold text-[#047857]">
+            Ranked search
+          </span>
+        </div>
         <div className="flex items-start gap-3 rounded-[1.1rem] bg-slate-100 p-3">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black text-white">
-            <Sparkles className="h-5 w-5" />
+            <Search className="h-5 w-5" />
           </span>
           <textarea
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            aria-label="Search request"
+            value={draftQuery}
+            onChange={(e) => setDraftQuery(e.target.value)}
             rows={2}
-            className="min-h-16 flex-1 resize-none bg-transparent p-1 text-[15px] font-semibold leading-6 text-black outline-none placeholder:text-slate-400"
+            className="min-h-16 flex-1 resize-none bg-transparent p-1 text-[15px] font-medium leading-6 text-black outline-none placeholder:text-slate-400"
+            placeholder="Describe who you want to meet"
           />
         </div>
         <div className="mt-3 flex flex-col gap-2 md:flex-row md:items-end">
@@ -185,8 +195,11 @@ export function Discover() {
             <Switch checked={verifiedOnly} onCheckedChange={setVerifiedOnly} />
             <span className="text-sm font-semibold">Verified only</span>
           </div>
-          <button className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white">
-            <Search className="h-4 w-4" /> Refresh
+          <button
+            onClick={findMatches}
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5"
+          >
+            <Search className="h-4 w-4" /> Find matches
           </button>
         </div>
       </section>
@@ -204,10 +217,13 @@ export function Discover() {
         {matches.map((m) => (
           <MatchCard
             key={m.profile.id}
-            match={m}
-            onAskAgents={() => setConvoMatch(m)}
-            onRequestIntro={() => setIntroMatch(m)}
-          />
+          match={m}
+          onAskAgents={() => setConvoMatch(m)}
+          onRequestIntro={() => {
+            setAgentDraftMessage("");
+            setIntroMatch(m);
+          }}
+        />
         ))}
       </div>
 
@@ -217,8 +233,9 @@ export function Discover() {
         me={user}
         match={convoMatch}
         query={query}
-        onApprove={() => {
+        onApprove={(draftMessage) => {
           if (convoMatch) {
+            setAgentDraftMessage(draftMessage || "");
             setIntroMatch(convoMatch);
             setConvoMatch(null);
           }
@@ -230,6 +247,7 @@ export function Discover() {
         onOpenChange={(v) => !v && setIntroMatch(null)}
         me={user}
         match={introMatch}
+        initialMessage={agentDraftMessage}
         onSend={sendIntro}
       />
     </div>

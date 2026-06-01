@@ -216,3 +216,14 @@ class AgentRunCreate(BaseModel):
 
 class AgentRunResume(BaseModel):
     decision: dict
+
+
+class AgentTestRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=2000)
+    state: dict = Field(default_factory=dict)
+
+
+class AgentTestRead(BaseModel):
+    reply: str
+    source: str
+    error: str = ""

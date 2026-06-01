@@ -17,8 +17,8 @@ export function MatchCard({
 }) {
   const p = match.profile;
   return (
-    <article className="group overflow-hidden rounded-[1.25rem] bg-white shadow-[0_14px_36px_rgb(30_41_59_/_0.08)] transition duration-300 hover:-translate-y-0.5">
-      <Link to="/app/profile/$id" params={{ id: p.id }} className="block">
+    <article className="group relative overflow-hidden rounded-[1.25rem] bg-white shadow-[0_14px_36px_rgb(30_41_59_/_0.08)] transition duration-300 hover:-translate-y-0.5">
+      <Link to="/app/profile/$id" params={{ id: p.id }} className="relative z-0 block">
         <div className="relative h-28 overflow-hidden">
           <img
             src={`https://images.unsplash.com/photo-${
@@ -32,9 +32,13 @@ export function MatchCard({
           <div className={`absolute inset-0 bg-gradient-to-br ${p.avatar_color} opacity-45`} />
         </div>
       </Link>
-      <div className="-mt-9 flex flex-col gap-3 p-4 pt-0">
-        <div className="flex items-end gap-3">
-          <Link to="/app/profile/$id" params={{ id: p.id }} className="rounded-full bg-white p-1">
+      <div className="relative z-10 -mt-9 flex flex-col gap-3 p-4 pt-0">
+        <div className="relative flex items-end gap-3 rounded-[1rem] bg-white/95 px-3 pb-2 pt-3 shadow-[0_10px_24px_rgb(15_23_42_/_0.08)] ring-1 ring-white/80 backdrop-blur-md">
+          <Link
+            to="/app/profile/$id"
+            params={{ id: p.id }}
+            className="relative z-20 -ml-1 -mt-8 rounded-full bg-white p-1 shadow-[0_8px_22px_rgb(15_23_42_/_0.12)] ring-4 ring-white"
+          >
             <GradientAvatar name={p.full_name} colorClass={p.avatar_color} size="lg" />
           </Link>
           <div className="min-w-0 flex-1 pb-1">

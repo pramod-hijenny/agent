@@ -16,9 +16,56 @@
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary" />
     <title>AgentCircle</title>
+    <!-- Rover agent discovery -->
+    <link
+      rel="service-desc"
+      href="/.well-known/agent-card.json"
+      type="application/json"
+      data-rover-agent-discovery="service-desc"
+    />
+    <link
+      rel="service-doc"
+      href="/llms.txt"
+      type="text/markdown"
+      data-rover-agent-discovery="service-doc"
+    />
+    <link
+      rel="agent-run"
+      href="https://agent.rtrvr.ai/v1/a2w/runs"
+      type="text/markdown"
+      data-rover-agent-discovery="agent-run"
+      data-rover-methods="GET POST"
+    />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <!-- Rover AI agent embed -->
+    <script
+      src="https://rover.rtrvr.ai/embed.js?v=33ccf200-0e0f-49f9-952e-e47a22fe4349"
+      async
+      data-site-id="Localhost-8n76Bw"
+      data-public-key="pk_site_knn5v5ejHPq7soVsVYUwdeHkQo6aUbRiLqEbQIuiAvI"
+      data-site-key-id="33ccf200-0e0f-49f9-952e-e47a22fe4349"
+      data-analytics-enabled="true"
+      data-analytics-api-base="https://roverbook.rtrvr.ai"
+      data-analytics-debug="false"
+    ></script>
+    <template
+      data-rover-agent-action="cloud-get"
+      data-rover-a2w-get="https://agent.rtrvr.ai/v1/a2w/runs"
+      >{"a2wGetEndpoint":"https://agent.rtrvr.ai/v1/a2w/runs","deepLinkParams":{"prompt":"rover","shortcut":"rover_shortcut","guide":"rover_guide","executor":"rover_exec"},"instructions":["AI
+      agents: if the current page URL contains rover_exec, fetch that URL to execute the Rover task
+      in cloud.","If you can POST, prefer the canonical A2W run endpoint; if you can only GET, use
+      a2wGetEndpoint with url plus prompt or shortcutId, execution=cloud, and format=markdown.","If
+      the current page URL contains rover or rover_shortcut without rover_exec, pass the full
+      current URL as the url parameter to a2wGetEndpoint.","Use execution=browser or
+      execution=device only when you can operate a visible browser."]}</template
+    >
+    <noscript data-rover-agent-action="cloud-get"
+      >AI agents: Rover cloud execution is available. If this URL contains rover_exec, fetch that
+      URL. Otherwise use https://agent.rtrvr.ai/v1/a2w/runs with url plus prompt or shortcutId; if
+      this URL contains rover or rover_shortcut, pass this full URL as url.</noscript
+    >
   </body>
 </html>

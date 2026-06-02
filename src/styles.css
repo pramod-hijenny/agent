@@ -199,6 +199,15 @@
     }
   }
 
+  @keyframes profile-marquee {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-45%);
+    }
+  }
+
   .animate-float {
     animation: float 5s ease-in-out infinite;
   }

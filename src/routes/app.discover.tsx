@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useUser, addIntro } from "@/lib/store";
 import { Input } from "@/components/ui/input";
 import {
@@ -17,7 +17,10 @@ import { IntroApprovalModal } from "@/components/IntroApprovalModal";
 import type { Goal, Profile } from "@/lib/types";
 import { toast } from "sonner";
 import { DEMO_COMMUNITY } from "@/lib/mock-data";
-import { fetchAllProfiles, createIntroRequest } from "@/lib/auth";
+import { createIntroRequest, getInsforgeAccessToken } from "@/lib/auth";
+import { discover as discoverViaApi } from "@/lib/api";
+
+type BackendMatch = Awaited<ReturnType<typeof discoverViaApi>>[number];
 
 export function Discover() {
   const user = useUser();
@@ -31,33 +34,48 @@ export function Discover() {
   const [convoMatch, setConvoMatch] = useState<ScoredMatch | null>(null);
   const [introMatch, setIntroMatch] = useState<ScoredMatch | null>(null);
   const [agentDraftMessage, setAgentDraftMessage] = useState("");
+  const [backendMatches, setBackendMatches] = useState<ScoredMatch[] | null>(null);
+  const [backendSearchActive, setBackendSearchActive] = useState(false);
   const [loading, setLoading] = useState(false);
-  // insforgeProfiles holds real backend profiles; loaded for future scoring integration
-  const [insforgeProfiles, setInsforgeProfiles] = useState<Profile[]>([]);
 
-  // Load real profiles from InsForge (excluding current user)
-  useEffect(() => {
-    setLoading(true);
-    fetchAllProfiles()
-      .then((profiles) => {
-        const others = profiles.filter((p) => p.user_id !== user?.user_id);
-        setInsforgeProfiles(others);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [user?.user_id]);
-
-  const matches = useMemo(
+  const localMatches = useMemo(
     () => (user ? scoreMatches(user, { city, goal, query, limit: 4 }) : []),
     [user, city, goal, query],
   );
+  const matches = backendMatches ?? localMatches;
 
   if (!user) return null;
 
-  function findMatches() {
+  function resetBackendResults() {
+    setBackendMatches(null);
+    setBackendSearchActive(false);
+  }
+
+  async function findMatches() {
     const nextQuery = draftQuery.trim();
-    setQuery(nextQuery || defaultQuery);
+    const searchQuery = nextQuery || defaultQuery;
+    setQuery(searchQuery);
     if (!nextQuery) setDraftQuery(defaultQuery);
+    setLoading(true);
+    try {
+      const token = await getInsforgeAccessToken();
+      if (!token) throw new Error("Sign in again to use ranked backend search.");
+      const results = await discoverViaApi(token, {
+        query: searchQuery,
+        city,
+        goal,
+        limit: 4,
+      });
+      setBackendMatches(results.map((item) => toScoredMatch(user, item, searchQuery)));
+      setBackendSearchActive(true);
+      toast.success("Backend ranked matches refreshed");
+    } catch (err) {
+      setBackendMatches(null);
+      setBackendSearchActive(false);
+      toast.error(err instanceof Error ? err.message : "Backend search failed");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function sendIntro(message: string) {
@@ -129,7 +147,9 @@ export function Discover() {
               </span>
               <div>
                 <p className="text-xl font-bold">{loading ? "..." : matches.length}</p>
-                <p className="text-sm font-medium text-white/65">ranked matches</p>
+                <p className="text-sm font-medium text-white/65">
+                  {backendSearchActive ? "backend matches" : "ranked matches"}
+                </p>
               </div>
             </div>
             <div className="mt-4 flex items-center gap-2 rounded-full bg-white/15 px-3 py-2 text-xs font-semibold">
@@ -148,7 +168,7 @@ export function Discover() {
             <p className="text-sm font-medium text-slate-500">Matching brief</p>
           </div>
           <span className="rounded-full bg-[#e8fff6] px-3 py-1 text-xs font-semibold text-[#047857]">
-            Ranked search
+            {backendSearchActive ? "Backend search" : "Ranked search"}
           </span>
         </div>
         <div className="flex items-start gap-3 rounded-[1.1rem] bg-slate-100 p-3">
@@ -158,7 +178,10 @@ export function Discover() {
           <textarea
             aria-label="Search request"
             value={draftQuery}
-            onChange={(e) => setDraftQuery(e.target.value)}
+            onChange={(e) => {
+              resetBackendResults();
+              setDraftQuery(e.target.value);
+            }}
             rows={2}
             className="min-h-16 flex-1 resize-none bg-transparent p-1 text-[15px] font-medium leading-6 text-black outline-none placeholder:text-slate-400"
             placeholder="Describe who you want to meet"
@@ -170,12 +193,21 @@ export function Discover() {
             <Input
               aria-label="City"
               value={city}
-              onChange={(e) => setCity(e.target.value)}
+              onChange={(e) => {
+                resetBackendResults();
+                setCity(e.target.value);
+              }}
               className="h-auto border-0 bg-transparent p-0 font-semibold shadow-none focus-visible:ring-0"
             />
           </label>
           <div className="min-w-52">
-            <Select value={goal} onValueChange={(v) => setGoal(v as Goal | "any")}>
+            <Select
+              value={goal}
+              onValueChange={(v) => {
+                resetBackendResults();
+                setGoal(v as Goal | "any");
+              }}
+            >
               <SelectTrigger className="rounded-full border-0 bg-slate-100 font-semibold">
                 <SelectValue />
               </SelectTrigger>
@@ -192,14 +224,21 @@ export function Discover() {
             </Select>
           </div>
           <div className="flex items-center gap-3 rounded-full bg-slate-100 px-4 py-2">
-            <Switch checked={verifiedOnly} onCheckedChange={setVerifiedOnly} />
+            <Switch
+              checked={verifiedOnly}
+              onCheckedChange={(value) => {
+                resetBackendResults();
+                setVerifiedOnly(value);
+              }}
+            />
             <span className="text-sm font-semibold">Verified only</span>
           </div>
           <button
             onClick={findMatches}
+            disabled={loading}
             className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5"
           >
-            <Search className="h-4 w-4" /> Find matches
+            <Search className="h-4 w-4" /> {loading ? "Finding..." : "Find matches"}
           </button>
         </div>
       </section>
@@ -217,13 +256,13 @@ export function Discover() {
         {matches.map((m) => (
           <MatchCard
             key={m.profile.id}
-          match={m}
-          onAskAgents={() => setConvoMatch(m)}
-          onRequestIntro={() => {
-            setAgentDraftMessage("");
-            setIntroMatch(m);
-          }}
-        />
+            match={m}
+            onAskAgents={() => setConvoMatch(m)}
+            onRequestIntro={() => {
+              setAgentDraftMessage("");
+              setIntroMatch(m);
+            }}
+          />
         ))}
       </div>
 
@@ -252,4 +291,30 @@ export function Discover() {
       />
     </div>
   );
+}
+
+function toScoredMatch(me: Profile, item: BackendMatch, query: string): ScoredMatch {
+  const other = item.profile;
+  const lowerInterests = new Set(me.interests.map((interest) => interest.toLowerCase()));
+  const sharedInterests = other.interests.filter((interest) =>
+    lowerInterests.has(interest.toLowerCase()),
+  );
+  const sharedGoals = other.goals.filter((goal): goal is Goal => me.goals.includes(goal as Goal));
+  const complementarySkills = other.skills.slice(0, 3);
+  const conversationTopics = [
+    query,
+    other.current_ask,
+    other.offering,
+    item.suggested_activity,
+  ].filter(Boolean);
+
+  return {
+    profile: other,
+    score: item.score,
+    sharedInterests,
+    complementarySkills,
+    sharedGoals,
+    why: item.reasons.join(" · ") || "Backend ranked this as a useful community match",
+    conversationTopics,
+  };
 }

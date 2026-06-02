@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     frontend_origin: str = "http://localhost:5173"
 
     database_url: str = "postgresql+asyncpg://agentcircle:agentcircle@localhost:5432/agentcircle"
-    sync_database_url: str = "postgresql://agentcircle:agentcircle@localhost:5432/agentcircle"
+    sync_database_url: str = "postgresql+psycopg://agentcircle:agentcircle@localhost:5432/agentcircle"
     redis_url: str = "redis://localhost:6379/0"
 
     jwt_secret: str = "change-me-local-dev-secret-32-bytes"

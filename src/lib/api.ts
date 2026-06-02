@@ -2,10 +2,6 @@ import type { AgentPersona, Community, IntroRequest, Permissions, Profile } from
 
 const API_URL = import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "";
 
-export function hasApi() {
-  return Boolean(API_URL);
-}
-
 interface TokenResponse {
   access_token: string;
 }

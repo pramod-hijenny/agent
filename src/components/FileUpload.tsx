@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { useMediaAssets } from "@/hooks/useMediaAssets";
+import { useMediaAssets, type MediaAsset } from "@/hooks/useMediaAssets";
 import { Upload, X } from "lucide-react";
 
 interface FileUploadProps {
@@ -67,7 +67,7 @@ export function FileUpload({ agentId, onUploadComplete }: FileUploadProps) {
   );
 }
 
-function FilePreview({ file }: { file: any }) {
+function FilePreview({ file }: { file: MediaAsset }) {
   const { deleteFile } = useMediaAssets();
   const [isDeleting, setIsDeleting] = useState(false);
 

@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -46,7 +48,7 @@ async def discover(
         user_id=user.id,
         workflow="discover",
         status="completed",
-        thread_id=f"discover:{user.id}",
+        thread_id=f"discover:{user.id}:{uuid4()}",
         input=payload.model_dump(),
         output={"matches": [str(item.profile.user_id) for item in scored[: payload.limit]]},
     )

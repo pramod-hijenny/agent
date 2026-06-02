@@ -15,8 +15,8 @@ AgentCircle is an AI-mediated social discovery app for startup communities. Each
 - [AI Agent System](#ai-agent-system)
 - [A2A Protocol](#a2a-protocol)
 - [API Reference](#api-reference)
-- [Environment Variables](#environment-variables)
 - [Development Commands](#development-commands)
+- [Deployment](#deployment-render)
 - [Specs](#specs)
 
 ---
@@ -42,13 +42,16 @@ User states intent → Agent scores candidates → Human reviews matches
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                    Frontend (Vite)                   │
+│           Frontend — Render Static Site              │
 │  React 19 · TypeScript · Tailwind v4 · Bun          │
-│  src/lib/api.ts → InsForge SDK + FastAPI backend     │
+│  https://agentmatch-circle.onrender.com              │
+│  src/lib/api.ts → FastAPI backend                    │
 └───────────────┬─────────────────────────────────────┘
                 │ HTTPS / WebSocket
         ┌───────┴──────────────────────────┐
-        │         FastAPI backend           │
+        │   FastAPI — Render Web Service    │
+        │  https://agentmatch-circle-       │
+        │  backend.onrender.com             │
         │  /auth  /me  /profiles            │
         │  /discover  /intros               │
         │  /conversations  /ws              │
@@ -65,10 +68,9 @@ User states intent → Agent scores candidates → Human reviews matches
         └───────┬──────────────────────────┘
                 │
         ┌───────┴──────────────────────────┐
-        │       InsForge backend (BaaS)     │
+        │       PostgreSQL Database         │
         │  Postgres · Auth · Storage        │
         │  Realtime · Edge Functions        │
-        │  AI gateway · Stripe              │
         └──────────────────────────────────┘
 ```
 
@@ -91,7 +93,7 @@ Vite + React 19 + TypeScript, Tailwind v4, shadcn-style primitives over Radix, B
 | `src/lib/navigation.tsx` | Lightweight client-side router with `popstate`-based re-renders |
 | `src/lib/matching.ts` | Client-side match scoring (used against mock data) |
 | `src/lib/a2a.ts` | A2A Agent Card discovery helpers |
-| `src/hooks/useMediaAssets.ts` | Upload hook for InsForge Storage + `media_assets` table |
+| `src/hooks/useMediaAssets.ts` | Upload hook for file storage + `media_assets` table |
 
 ### Routing
 
@@ -101,28 +103,23 @@ Vite + React 19 + TypeScript, Tailwind v4, shadcn-style primitives over Radix, B
 
 ## Backend
 
-The backend has two layers:
+The backend is a Python FastAPI service deployed on Render.
 
-### 1. InsForge (primary BaaS)
+- **Live URL:** https://agentmatch-circle-backend.onrender.com
+- **Dashboard:** https://dashboard.render.com/web/srv-d8eq0pernols73aiiok0
 
-InsForge provides the database (Postgres), auth, file storage, realtime, and edge functions. All RLS policies are keyed to `auth.uid()`.
+`backend/` handles the LangChain agent workflow, discovery scoring, intro drafting, and the A2A endpoint. It validates Bearer tokens and stores in-memory run state.
 
-- **Project:** `f5f2acd0-51ca-47e1-a4cf-3dd3a6f24a5a` (region: us-east)
-- **API base:** `https://mep6b952.us-east.insforge.app`
-- **Dashboard:** https://insforge.dev/dashboard/project/f5f2acd0-51ca-47e1-a4cf-3dd3a6f24a5a
-
-Key tables:
+Key database tables:
 
 | Table | Contents |
 |---|---|
 | `profiles` | User profiles with agent persona info and permissions |
+| `intro_requests` | Proposed introductions with status and audit trail |
 | `media_assets` | File upload metadata (bucket, object key, URL, owner) |
+| `social_posts` | Social media posts synced from external platforms |
 
-### 2. FastAPI (agent orchestration)
-
-`backend/` is a Python FastAPI service responsible for the LangChain agent workflow, discovery scoring, intro drafting, and the A2A endpoint. It delegates auth to InsForge (validates Bearer tokens against InsForge's session API) and stores in-memory run state.
-
-Run with:
+Run locally with:
 ```bash
 cd backend
 uv sync
@@ -275,32 +272,6 @@ All routes are served from the FastAPI backend (`backend/app/api/routes/`).
 
 ---
 
-## Environment Variables
-
-### Frontend (`.env`)
-
-| Variable | Description |
-|---|---|
-| `VITE_INSFORGE_URL` | InsForge API base URL |
-| `VITE_INSFORGE_ANON_KEY` | InsForge anonymous JWT |
-| `VITE_API_URL` | FastAPI backend base URL (optional override) |
-
-### Backend (`backend/.env`)
-
-| Variable | Description |
-|---|---|
-| `OPENAI_API_KEY` | LLM key for intro drafting (optional; falls back to template) |
-| `OPENAI_MODEL` | Model name, e.g. `gpt-4o-mini` |
-| `OPENAI_BASE_URL` | Override for OpenAI-compatible endpoints |
-| `OPENAI_TIMEOUT_SECONDS` | Request timeout (default: 30) |
-| `INSFORGE_URL` | InsForge API base (for token validation) |
-| `INSFORGE_SERVICE_KEY` | Service-role key for backend-to-InsForge calls |
-| `SECRET_KEY` | JWT signing key |
-| `APP_ENV` | `development` enables the `demo-agentcircle-local` token |
-| `CORS_ORIGINS` | Comma-separated allowed origins |
-
----
-
 ## Development Commands
 
 ```bash
@@ -317,7 +288,18 @@ uv sync
 uvicorn app.main:app --reload   # FastAPI on :8000
 ```
 
-Static frontend deploys via Wrangler: `dist/` is served as Cloudflare Pages assets with SPA fallback configured in `wrangler.jsonc`.
+## Deployment (Render)
+
+Both services are deployed on Render and auto-deploy on push to `main`.
+
+| Service | Type | URL |
+|---|---|---|
+| `agentmatch-circle` | Static site | https://agentmatch-circle.onrender.com |
+| `agentmatch-circle-backend` | Web service (Python) | https://agentmatch-circle-backend.onrender.com |
+
+**Frontend** — Render builds with Bun (`bun install && bun run build`) and serves the `dist/` folder as a static site.
+
+**Backend** — Render installs `uv`, runs `uv sync`, and starts the app with `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
 
 ---
 

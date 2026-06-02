@@ -6,115 +6,159 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 AgentCircle — an AI-mediated social discovery app for startup communities. Users configure an AI social representative, discover compatible people, review agent-to-agent context, and approve introductions before anything is sent.
 
-The repo is a React frontend (root) with an InsForge backend. The frontend currently uses `localStorage` (`src/lib/store.ts`) and mock data (`src/lib/mock-data.ts`); the backend is InsForge, which provides database, auth, storage, realtime, and serverless functions.
+The repo is a React frontend (root) with two backends:
+- **InsForge** (primary BaaS) — database, auth, storage, realtime, functions
+- **FastAPI** (`backend/`) — LangChain agent workflows, discovery scoring, intro drafting, A2A endpoint
+
+The frontend currently uses `localStorage` (`src/lib/store.ts`) and mock data (`src/lib/mock-data.ts`) as fallbacks; InsForge and the FastAPI backend are the intended targets for all data.
 
 ## Frontend
 
-Vite + React 19 + TypeScript, Tailwind v4, shadcn-style primitives over Radix, Bun. Static-only build deployable as Cloudflare Pages assets via `wrangler.jsonc`.
+Vite + React 19 + TypeScript, Tailwind v4, shadcn-style primitives over Radix, Bun.
 
 ### Commands (run from repo root)
 
 - `bun install` — install dependencies
 - `bun run dev` — Vite dev server (binds 127.0.0.1)
 - `bun run build` / `bun run build:dev` — production / dev-mode build
-- `bun run preview` — preview built app
 - `bun run lint` — ESLint over the repo
 - `bun run format` — Prettier write
-- No test runner is wired up. Before opening a change, run `bun run lint` and `bun run build`. New tests go beside the code as `ComponentName.test.tsx` / `libName.test.ts`; add a `test` script to `package.json` when you introduce one.
+- No test runner is wired up. Before opening a change, run `bun run lint` and `bun run build`.
 
 ### Environment variables (`.env`)
 
-- `VITE_INSFORGE_URL` — InsForge API base (e.g., `https://mep6b952.us-east.insforge.app`)
+- `VITE_INSFORGE_URL` — InsForge API base (e.g. `https://mep6b952.us-east.insforge.app`)
 - `VITE_INSFORGE_ANON_KEY` — Anonymous JWT key for InsForge SDK
-- `VITE_API_URL` (optional) — Override default API endpoint for backend calls
-- These are loaded by Vite at build time; set them in `.env` before running `dev` or `build`.
+- `VITE_API_URL` (optional) — Override default API endpoint for FastAPI calls
+- `VITE_RTRVR_API_KEY` — rtrvr.ai API key for browser-automation social sync; obtain from the rtrvr Chrome extension popup
+- `VITE_RTRVR_DEVICE_ID` — rtrvr device ID (from extension popup); identifies the browser instance to drive
 
 ### Routing & app shell
 
-Routing is hand-rolled, not a router library. `src/App.tsx` switches on `pathname` from `src/lib/navigation.tsx`:
+Hand-rolled router in `src/lib/navigation.tsx`. `src/App.tsx` switches on `pathname`:
+- Routes under `/app/*` render inside `AppLayout`
+- `/`, `/auth`, `/onboarding` render standalone
+- Dynamic route params (e.g. `/app/profile/:id`) extracted by regex in `App.tsx`, consumed via `useRouteParams()`
 
-- `RouterProvider` tracks `window.location.pathname` via `popstate`.
-- `navigate(to, { replace })` mutates history and fires a synthetic `popstate` so subscribers re-render.
-- Dynamic route params (e.g. `/app/profile/:id`) are extracted by regex in `App.tsx` and passed via `RouteParamsProvider`; `useRouteParams()` consumes them.
-- Routes under `/app/*` render inside `AppLayout`; everything else (`/`, `/auth`, `/onboarding`) renders standalone.
-
-When adding a route: create the file in `src/routes/`, import it in `App.tsx`, add a branch in `renderAppRoute` (or top-level), and add an entry to the `TITLES` map.
+When adding a route: create file in `src/routes/`, import in `App.tsx`, add branch in `renderAppRoute`, add entry to `TITLES` map.
 
 ### Frontend data layer
 
-- `src/lib/store.ts` — `localStorage`-backed user/auth/intros store with a `useSyncExternalStore` subscription pattern. This is the seam to replace with API calls; the backend's `/auth`, `/me`, `/profiles`, `/discover`, `/intros`, `/conversations`, `/ws` endpoints are the intended targets.
-- `src/lib/api.ts` — API client wrappers.
-- `src/lib/types.ts` — canonical domain types (`Profile`, `Permissions`, `IntroRequest`, `AgentPersona`, etc.). `DEFAULT_PERMISSIONS` is the source of truth for new-user permission defaults.
-- `src/lib/matching.ts` — client-side match scoring used against mock data.
-- `src/lib/a2a.ts` — A2A Agent Card discovery helpers (agent interoperability).
-- `src/lib/mock-data.ts` — seed profiles for the prototype.
+- `src/lib/store.ts` — `localStorage`-backed store; seam to replace with API calls
+- `src/lib/api.ts` — API client wrappers for all FastAPI + InsForge calls
+- `src/lib/auth.ts` — InsForge auth helpers (session management, sign-in/out)
+- `src/lib/types.ts` — canonical domain types (`Profile`, `Permissions`, `IntroRequest`, `AgentPersona`). `DEFAULT_PERMISSIONS` is source of truth for new-user permission defaults; `can_send_without_approval`, `can_share_phone`, `can_share_email` default to `false`
+- `src/lib/matching.ts` — client-side match scoring against mock data
+- `src/lib/a2a.ts` — A2A Agent Card discovery helpers
+- `src/lib/mock-data.ts` — seed profiles for prototype
+- `src/lib/social-posts.ts` — `SocialPost` / `SocialSyncRun` types and InsForge queries for LinkedIn, X/Twitter, and other platforms
+- `src/lib/rtrvr.ts` — rtrvr.ai MCP client; extracts social posts from open Chrome tabs via browser automation
+- `src/hooks/useMediaAssets.ts` — uploads to InsForge Storage and manages metadata in `media_assets`
 
 ### UI conventions
 
-- Path alias `@/*` → `src/*` (configured via `vite-tsconfig-paths`).
-- shadcn-style primitives live in `src/components/ui/`; reusable feature components live directly under `src/components/` (e.g. `AgentCard`, `IntroApprovalModal`, `MatchScoreBadge`).
-- Tailwind v4 with `@tailwindcss/vite`; tokens/entry in `src/styles.css`.
-- Do not import Next.js-only packages (e.g. `server-only`). Do not add a heavier app framework without first updating `spec/design.md`.
-
-### File uploads
-
-- `src/hooks/useMediaAssets.ts` — hook for uploading files to InsForge Storage and managing metadata in the `media_assets` table.
-- `src/components/FileUpload.tsx` — drag-and-drop or click-to-upload component with optional agent association.
-- `src/components/MediaGallery.tsx` — displays uploaded files in a responsive grid with download/delete actions.
-- Files are stored in the public `uploads` bucket; accessible at `https://mep6b952.us-east.insforge.app/storage/v1/object/public/uploads/{filename}`.
-- For details, see `FILE_UPLOAD_SETUP.md`.
-
-### Frontend & InsForge integration
-
-The frontend transitions from mock data to InsForge APIs over time:
-
-- During development, mock data is used by default; set `VITE_API_URL` to point to InsForge to test live backend calls.
-- API integration lives in `src/lib/api.ts`; the InsForge SDK is used there to fetch data.
-- When integrating a new feature, consider whether to start with mock data or add the InsForge call directly.
+- Path alias `@/*` → `src/*` (via `vite-tsconfig-paths`)
+- shadcn-style primitives in `src/components/ui/`; feature components directly under `src/components/`
+- Tailwind v4 with `@tailwindcss/vite`; tokens in `src/styles.css`
 
 ## Backend (InsForge)
 
-The backend is InsForge — a serverless platform providing database, auth, storage, realtime, and functions. Use the InsForge CLI and SDK for all backend work.
+Primary BaaS: database (Postgres), auth, file storage, realtime, edge functions, AI gateway.
 
-### Setup & CLI Commands
+- **Project:** `f5f2acd0-51ca-47e1-a4cf-3dd3a6f24a5a` (region: us-east)
+- **API base:** `https://mep6b952.us-east.insforge.app`
+- **Dashboard:** https://insforge.dev/dashboard/project/f5f2acd0-51ca-47e1-a4cf-3dd3a6f24a5a
 
-- Already linked to project `f5f2acd0-51ca-47e1-a4cf-3dd3a6f24a5a` (region: us-east)
-- Dashboard: https://insforge.dev/dashboard/project/f5f2acd0-51ca-47e1-a4cf-3dd3a6f24a5a
-- Common tasks: database CRUD, auth, file storage, functions, realtime updates, emails, billing checkout
-
-### Using InsForge
-
-For backend work, use the **insforge skill** or **insforge-cli skill**:
-
-- `insforge` skill: app code (database CRUD, auth, storage uploads/RLS, functions, realtime, emails, Stripe checkout, subscriptions)
-- `insforge-cli` skill: infrastructure (SQL migrations, CLI commands, Stripe catalog setup, S3-compatible tooling)
-
-The frontend's `VITE_API_URL` points to the InsForge backend (configured automatically).
+For backend work, use the **insforge skill** (SDK/app code) or **insforge-cli skill** (infrastructure, migrations, CLI commands).
 
 ### Database schema & migrations
 
 Migrations live in `migrations/` and are applied via the InsForge CLI. Key tables:
 
-- `profiles` — user profiles with agent persona info, permissions, created/updated timestamps
+- `profiles` — user profiles; stores `agent` persona and `permissions` as JSONB columns. Public select, owner-only write via RLS.
+- `intro_requests` — proposed introductions with `from_user_id`, `to_user_id`, `message`, `status` (`pending`/`accepted`/`rejected`), and audit fields.
 - `media_assets` — file upload metadata (bucket, object_key, owner_user_id, content_type, url)
+- `social_posts` — social media posts synced from external platforms (user_id, platform, external_post_id, engagement metrics, fetched_at)
+- `social_sync_runs` — audit log of each platform sync (status, post_count, error_message, started_at, finished_at)
 
-All tables use RLS policies keyed to `auth.uid()`; only the logged-in user can see their own data. When adding a table or modifying schema, run migrations via `insforge-cli` and update the relevant data type in TypeScript (`src/lib/types.ts`).
+All tables use RLS keyed to `auth.uid()`. When adding a table: write a timestamped migration (`YYYYMMDDHHmmss_name.sql`), run via CLI, update TypeScript types.
+
+## Backend (FastAPI — agent orchestration)
+
+Python FastAPI service in `backend/` handles LangChain agent workflows, discovery scoring, and the A2A endpoint. Delegates auth to InsForge (validates Bearer tokens against InsForge session API). Uses `uv` for dependency management.
+
+### Commands
+
+```bash
+cd backend
+uv sync
+uvicorn app.main:app --reload   # runs on :8000
+```
+
+### Environment variables (`backend/.env`)
+
+- `OPENAI_API_KEY` — LLM key for intro drafting (falls back to template if absent)
+- `OPENAI_MODEL` — model name, e.g. `gpt-4o-mini`; leave empty to disable LLM drafting
+- `OPENAI_BASE_URL` — defaults to `https://api.tokenrouter.com/v1`
+- `INSFORGE_URL` — InsForge API base for token validation
+- `JWT_SECRET` / `JWT_ALGORITHM` — local JWT signing (used for non-InsForge tokens)
+- `FRONTEND_ORIGIN` — CORS allowed origin (default: `http://localhost:5173`)
+- `APP_ENV` — set to anything except `production` to enable the `demo-agentcircle-local` token bypass
+- `PUBLIC_BASE_URL` — used to build A2A agent card URLs
+
+### Agent workflow architecture
+
+The agent system lives in `backend/app/agents/workflows.py`:
+
+1. **`build_persona_prompt(profile, permissions, memory)`** — assembles the LLM system prompt from agent name, tone, mission, user-editable memory, and allowed/blocked capabilities. Hard-coded rules: never impersonate the human, never share contact details, always draft for approval.
+
+2. **`score_candidates(state)`** — deterministic scoring: base 40 + 8 per shared interest + 6 per shared goal + 15 for city match, capped at 99. Returns top-10 with plain-language reasons.
+
+3. **`draft_intro_with_langchain(profile, target, persona_prompt, fallback)`** — calls `create_agent(model, tools=[], system_prompt=persona_prompt)` via LangChain; constrained to ≤55-word warm intro. Returns `draft_source: "llm" | "fallback" | "disabled"`.
+
+4. **`start_agent_workflow(thread_id, state)`** — scores candidates, drafts intro, sets `__interrupt__` on the state to pause for human review. Status becomes `waiting_for_approval`.
+
+5. **`resume_agent_workflow(thread_id, decision)`** — merges `approved` + `edited_message` into state, clears `__interrupt__`, logs the decision. Status becomes `completed`.
+
+In-memory state is stored in `_RUN_MEMORY[thread_id]`. Run records are in `_RUN_RECORDS[thread_id]` on the agents router.
+
+### A2A Protocol
+
+Implements the Agent-to-Agent (A2A) protocol at `backend/app/api/routes/a2a.py`:
+- `GET /.well-known/agent-card.json` — agent discovery card
+- `POST /a2a/v1` — JSON-RPC 2.0 or plain JSON endpoint; supports methods `persona_match` and `intro_draft`
+- All A2A responses include `"approval_required": true` — no A2A call bypasses human approval
+- Frontend `public/.well-known/agent-card.json` is a static copy for Cloudflare Pages
+
+## Deployment
+
+### Frontend (InsForge / Vercel)
+
+The CLI blocks deploying from `dist/` by name, and the project root exceeds the 5,000-file limit (30k+ `node_modules` files) — even with `.deployignore`. Workaround:
+
+```bash
+bun run build
+cp -r dist .deploy-output
+npx @insforge/cli deployments deploy .deploy-output
+rm -rf .deploy-output
+```
+
+Live URL: `https://mep6b952.insforge.site`
+
+Also configured for Cloudflare Pages via `wrangler.jsonc` (serves `dist/` with SPA fallback). Don't edit `dist/` directly.
+
+### Backend (FastAPI)
+
+Deploy as a container to InsForge Compute (Fly.io) using the Dockerfile in `backend/`.
 
 ## Specs (`spec/`)
 
-This repo uses spec-driven development. Before making product-shape or stack-shape changes, read the relevant spec:
+Spec-driven development — read before making product-shape changes:
 
-- `spec/mission.md` — product mission, principles, safety model
+- `spec/mission.md` — mission, principles, safety model (hard constraints: human approval by default, consent-first, no autonomous contact sharing)
 - `spec/task.md` — roadmap, ready/done checklists, launch gates
-- `spec/design.md` — product + technical architecture, data model, design system
-
-The mission imposes hard constraints (human-in-the-loop, visible trust, consent-gated actions). Anything that hides agent actions, removes approval gates, or shares contact info without explicit permission is out of scope.
+- `spec/design.md` — technical architecture, data model, design system
 
 ## RocketRide
 
 If a task involves AI pipelines, document processing, RAG, or data integration, follow `.claude/rules/rocketride.md` — read the relevant doc(s) under `.rocketride/docs/` before writing RocketRide code.
-
-## Deployment notes
-
-- Static frontend deploys via Wrangler: `dist/` is served as Cloudflare Pages assets with SPA fallback (`wrangler.jsonc`). Don't edit `dist/`, `.output/`, `.vinxi/`, `.wrangler/`, or `.tanstack/` — they're build output.
-- Review `wrangler.jsonc` before any deployment-related change.

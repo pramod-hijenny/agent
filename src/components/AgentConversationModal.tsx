@@ -71,7 +71,7 @@ export function AgentConversationModal({
     return () => {
       cancelled = true;
     };
-  }, [open, match?.profile.id]);
+  }, [open, match, me, query]);
 
   if (!match) return null;
   const other = match.profile;
@@ -157,7 +157,10 @@ export function AgentConversationModal({
               </div>
             )}
             {logs.map((item) => (
-              <div key={item} className="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-medium text-slate-600">
+              <div
+                key={item}
+                className="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-medium text-slate-600"
+              >
                 {item}
               </div>
             ))}

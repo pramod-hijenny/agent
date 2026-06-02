@@ -3,12 +3,27 @@ from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 import httpx
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.agents.workflows import generate_agent_reply, resume_agent_workflow, start_agent_workflow
+from app.agents.workflows import (
+    generate_agent_reply,
+    resume_agent_workflow,
+    start_agent_workflow,
+)
 from app.core.config import get_settings
 from app.core.security import decode_access_token
-from app.schemas import AgentRunCreate, AgentRunRead, AgentRunResume, AgentTestRead, AgentTestRequest
+from app.db.session import get_session
+from app.models import AgentRun
+from app.schemas import (
+    AgentRunCreate,
+    AgentRunRead,
+    AgentRunResume,
+    AgentTestRead,
+    AgentTestRequest,
+)
 
 router = APIRouter(prefix="/agents", tags=["agents"])
 
@@ -49,10 +64,61 @@ def jsonable(payload: dict) -> dict:
     return json.loads(json.dumps(payload, default=str))
 
 
+def serialize_run(row: AgentRun) -> AgentRunRead:
+    return AgentRunRead(
+        id=row.id,
+        workflow=row.workflow,
+        status=row.status,
+        thread_id=row.thread_id,
+        input=row.input,
+        output=row.output,
+        error=row.error,
+        created_at=row.created_at,
+        updated_at=row.updated_at,
+    )
+
+
+async def save_run_if_possible(
+    session: AsyncSession,
+    identity: str,
+    run: AgentRunRead,
+) -> None:
+    try:
+        user_id = UUID(identity)
+    except ValueError:
+        return
+    row = AgentRun(
+        id=run.id,
+        user_id=user_id,
+        workflow=run.workflow,
+        status=run.status,
+        thread_id=run.thread_id,
+        input=run.input,
+        output=run.output,
+        error=run.error,
+        created_at=run.created_at,
+        updated_at=run.updated_at,
+    )
+    session.add(row)
+    try:
+        await session.commit()
+    except SQLAlchemyError:
+        await session.rollback()
+
+
+async def get_saved_run_if_possible(session: AsyncSession, thread_id: str) -> AgentRun | None:
+    try:
+        return await session.scalar(select(AgentRun).where(AgentRun.thread_id == thread_id))
+    except SQLAlchemyError:
+        await session.rollback()
+        return None
+
+
 @router.post("/runs", response_model=AgentRunRead)
 async def create_run(
     payload: AgentRunCreate,
     authorization: str | None = Header(default=None),
+    session: AsyncSession = Depends(get_session),
 ) -> AgentRunRead:
     identity = await get_agent_identity(authorization)
     state = dict(payload.state)
@@ -78,6 +144,7 @@ async def create_run(
         updated_at=now,
     )
     _RUN_RECORDS[payload.thread_id] = run
+    await save_run_if_possible(session, identity, run)
     return run
 
 
@@ -86,9 +153,11 @@ async def resume_run(
     thread_id: str,
     payload: AgentRunResume,
     authorization: str | None = Header(default=None),
+    session: AsyncSession = Depends(get_session),
 ) -> AgentRunRead:
     await get_agent_identity(authorization)
-    run = _RUN_RECORDS.get(thread_id)
+    db_run = await get_saved_run_if_possible(session, thread_id)
+    run = serialize_run(db_run) if db_run else _RUN_RECORDS.get(thread_id)
     if not run:
         raise HTTPException(status_code=404, detail="Agent run not found")
     now = datetime.now(UTC)
@@ -100,6 +169,12 @@ async def resume_run(
     except Exception as exc:
         updated = run.model_copy(update={"status": "failed", "error": str(exc), "updated_at": now})
     _RUN_RECORDS[thread_id] = updated
+    if db_run:
+        db_run.status = updated.status
+        db_run.output = updated.output
+        db_run.error = updated.error
+        db_run.updated_at = updated.updated_at
+        await session.commit()
     return updated
 
 
@@ -117,3 +192,4 @@ async def test_agent(
         source=result["draft_source"],
         error=result["llm_error"],
     )
+

@@ -52,15 +52,15 @@ const STORY_IMAGES = [
 ];
 
 const RECOMMENDATIONS = [
-  { label: "UI/UX", icon: BriefcaseBusiness, className: "bg-[#e6f0ff]" },
-  { label: "Music", icon: Music2, className: "bg-[#ff78a8]" },
+  { label: "UI/UX", icon: BriefcaseBusiness, className: "bg-[#fff4c8]" },
+  { label: "Music", icon: Music2, className: "bg-[#f5df9b]" },
   {
     label: "Cooking",
     icon: Utensils,
     image:
       "https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=360&q=85",
   },
-  { label: "Hiking", icon: PanelTop, className: "bg-[#b983ff]" },
+  { label: "Hiking", icon: PanelTop, className: "bg-[#191919] text-[#f7b801]" },
 ];
 
 export function Home() {
@@ -179,22 +179,20 @@ export function Home() {
       <section className="min-w-0">
         <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7e8fa8]">
-              {DEMO_COMMUNITY.name}
-            </p>
-            <h1 className="mt-1 text-3xl font-bold tracking-tight text-black md:text-4xl">
+            <p className="app-kicker">{DEMO_COMMUNITY.name}</p>
+            <h1 className="mt-1 text-3xl font-black tracking-tight text-black md:text-4xl">
               News feed
             </h1>
           </div>
-          <div className="flex w-fit rounded-full bg-slate-100 p-1 text-xs font-semibold text-slate-400">
+          <div className="app-soft-panel flex w-fit rounded-full p-1 text-xs font-bold text-[var(--app-muted)]">
             {["Recents", "Friends", "Popular"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={
                   activeTab === tab
-                    ? "rounded-full bg-white px-4 py-1.5 text-black shadow-sm"
-                    : "rounded-full px-4 py-1.5 transition hover:text-slate-700"
+                    ? "rounded-full bg-black px-4 py-1.5 text-[#f7b801] shadow-sm"
+                    : "rounded-full px-4 py-1.5 transition hover:text-black"
                 }
               >
                 {tab}
@@ -204,12 +202,12 @@ export function Home() {
         </div>
 
         <div className="mb-4 flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <button className="group relative h-28 w-24 shrink-0 overflow-hidden rounded-[1.1rem] bg-black text-white shadow-[0_12px_26px_rgb(15_23_42_/_0.14)]">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_40%_20%,#7df3c8,transparent_35%),linear-gradient(145deg,#111827,#334155)]" />
-            <span className="absolute left-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white text-black transition group-hover:rotate-90">
+          <button className="group relative h-28 w-24 shrink-0 overflow-hidden rounded-[1.25rem] bg-black text-white shadow-[0_12px_26px_rgb(15_23_42_/_0.14)]">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_40%_20%,rgb(247_184_1_/_0.72),transparent_35%),linear-gradient(145deg,#111111,#3a2b00)]" />
+            <span className="absolute left-3 top-3 flex h-8 w-8 items-center justify-center rounded-[0.8rem] bg-white text-black transition group-hover:rotate-90">
               <Plus className="h-4 w-4" />
             </span>
-            <span className="absolute bottom-3 left-3 right-3 text-left text-xs font-semibold">
+            <span className="absolute bottom-3 left-3 right-3 text-left text-xs font-black">
               Create story
             </span>
           </button>
@@ -221,14 +219,14 @@ export function Home() {
         {pending.length > 0 && (
           <Link
             to="/app/inbox"
-            className="mb-4 flex items-center gap-3 rounded-[1.1rem] border border-[#f6d57c] bg-[#fff4cf] p-3 shadow-[0_12px_30px_rgb(180_130_20_/_0.09)] transition hover:-translate-y-0.5"
+            className="app-card-hover mb-4 flex items-center gap-3 rounded-[1.15rem] border border-[#f6d57c] bg-[#fff4cf] p-3 shadow-[0_12px_30px_rgb(180_130_20_/_0.09)]"
           >
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black text-white">
               <Send className="h-4 w-4" />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="font-semibold">{pending.length} intro waiting for approval</p>
-              <p className="truncate text-xs font-semibold text-slate-500">
+              <p className="font-black text-black">{pending.length} intro waiting for approval</p>
+              <p className="truncate text-xs font-semibold text-[var(--app-muted)]">
                 Review the message your agent drafted before it goes out.
               </p>
             </div>
@@ -241,13 +239,13 @@ export function Home() {
         />
 
         {feedError && (
-          <div className="mb-4 rounded-[1rem] border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
+          <div className="mb-4 rounded-[1rem] border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
             {feedError}
           </div>
         )}
 
         {actionError && (
-          <div className="mb-4 rounded-[1rem] border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
+          <div className="mb-4 rounded-[1rem] border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
             {actionError}
           </div>
         )}
@@ -277,9 +275,9 @@ export function Home() {
             );
           })
         ) : (
-          <section className="rounded-[1.35rem] bg-white p-6 text-center shadow-[0_16px_42px_rgb(30_41_59_/_0.09)]">
-            <h2 className="text-xl font-bold text-black">No posts yet</h2>
-            <p className="mt-2 text-sm font-semibold text-slate-500">
+          <section className="app-card rounded-[1.35rem] p-6 text-center">
+            <h2 className="text-xl font-black text-black">No posts yet</h2>
+            <p className="mt-2 text-sm font-semibold text-[var(--app-muted)]">
               Share the first update to create a real backend-backed feed post.
             </p>
           </section>
@@ -287,34 +285,37 @@ export function Home() {
       </section>
 
       <aside className="sticky top-6 h-fit space-y-5 hidden xl:block">
-        <section className="rounded-[1.35rem] bg-black p-4 text-white shadow-[0_16px_38px_rgb(15_23_42_/_0.18)]">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold tracking-tight">Live now</h2>
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15">
-              <Video className="h-4 w-4" />
-            </span>
+        <section className="app-hero relative overflow-hidden rounded-[1.35rem] p-4 text-white shadow-[0_16px_38px_rgb(15_23_42_/_0.18)]">
+          <div className="honeycomb-bg absolute inset-0 opacity-10 mix-blend-screen" />
+          <div className="relative">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-black tracking-tight">Live now</h2>
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15">
+                <Video className="h-4 w-4" />
+              </span>
+            </div>
+            <div className="mt-3 overflow-hidden rounded-[1rem]">
+              <img
+                src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=700&q=85"
+                alt=""
+                className="h-28 w-full object-cover transition duration-700 hover:scale-105"
+                loading="lazy"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+            <p className="mt-3 text-base font-black">Founder demo room</p>
+            <p className="mt-1 text-xs font-semibold leading-5 text-white/65">
+              18 members discussing AI onboarding, first customers, and warm intros.
+            </p>
           </div>
-          <div className="mt-3 overflow-hidden rounded-[1rem]">
-            <img
-              src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=700&q=85"
-              alt=""
-              className="h-28 w-full object-cover transition duration-700 hover:scale-105"
-              loading="lazy"
-              referrerPolicy="no-referrer"
-            />
-          </div>
-          <p className="mt-3 text-base font-semibold">Founder demo room</p>
-          <p className="mt-1 text-xs font-semibold leading-5 text-white/65">
-            18 members discussing AI onboarding, first customers, and warm intros.
-          </p>
         </section>
 
         <section>
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold tracking-tight text-black">Suggestions</h2>
+            <h2 className="text-2xl font-black tracking-tight text-black">Suggestions</h2>
             <Link
               to="/app/discover"
-              className="text-xs font-semibold text-slate-400 hover:text-black"
+              className="text-xs font-bold text-[var(--app-muted)] hover:text-black"
             >
               See all
             </Link>
@@ -327,7 +328,7 @@ export function Home() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-bold tracking-tight text-black">Recommendations</h2>
+          <h2 className="text-2xl font-black tracking-tight text-black">Recommendations</h2>
           <div className="mt-3 grid grid-cols-2 gap-3">
             {RECOMMENDATIONS.map((item) => (
               <RecommendationTile key={item.label} item={item} />
@@ -395,17 +396,17 @@ function Composer({
   return (
     <form
       onSubmit={(event) => void submitPost(event)}
-      className="mb-4 rounded-[1.25rem] bg-white p-3 shadow-[0_14px_36px_rgb(30_41_59_/_0.09)] md:p-4"
+      className="app-card mb-4 rounded-[1.35rem] p-3 md:p-4"
     >
-      <div className="flex items-center gap-3 rounded-full bg-slate-100 px-4 py-2.5">
+      <div className="app-field flex items-center gap-3 rounded-[1.2rem] px-4 py-2.5">
         <GradientAvatar name={user.full_name} colorClass={user.avatar_color} size="sm" />
         <input
           value={body}
           onChange={(event) => setBody(event.target.value)}
-          className="min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none placeholder:text-slate-400"
+          className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-black outline-none placeholder:text-[var(--app-placeholder)]"
           placeholder="Share an update, ask, or win"
         />
-        <Smile className="h-5 w-5 text-slate-400" />
+        <Smile className="h-5 w-5 text-[var(--app-placeholder)]" />
       </div>
 
       <input
@@ -417,14 +418,14 @@ function Composer({
       />
 
       {(selectedFile || showLocation || error) && (
-        <div className="mt-3 grid gap-2 rounded-[1rem] bg-slate-50 p-3">
+        <div className="app-soft-panel mt-3 grid gap-2 rounded-[1rem] p-3">
           {selectedFile && (
-            <div className="flex items-center justify-between gap-3 text-sm font-semibold text-slate-700">
+            <div className="flex items-center justify-between gap-3 text-sm font-semibold text-[var(--app-ink-soft)]">
               <span className="truncate">{selectedFile.name}</span>
               <button
                 type="button"
                 onClick={() => setSelectedFile(null)}
-                className="rounded-full bg-white px-3 py-1 text-xs text-slate-500 hover:text-black"
+                className="rounded-full bg-white px-3 py-1 text-xs font-bold text-[var(--app-muted)] hover:text-black"
               >
                 Remove
               </button>
@@ -434,7 +435,7 @@ function Composer({
             <input
               value={location}
               onChange={(event) => setLocation(event.target.value)}
-              className="rounded-full bg-white px-4 py-2 text-sm font-semibold outline-none placeholder:text-slate-400"
+              className="app-field rounded-full px-4 py-2 text-sm font-semibold outline-none placeholder:text-[var(--app-placeholder)]"
               placeholder="Add a location"
             />
           )}
@@ -453,7 +454,7 @@ function Composer({
         <button
           type="button"
           onClick={() => setVisibility((current) => (current === "public" ? "friends" : "public"))}
-          className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+          className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-bold text-[var(--app-ink-soft)] transition hover:bg-[#fff4c8] hover:text-black"
         >
           <Sparkles className="h-5 w-5 text-black" />
           {visibility === "public" ? "Public" : "Friends"}
@@ -462,7 +463,7 @@ function Composer({
         <button
           type="submit"
           disabled={isPosting}
-          className="ml-auto rounded-full bg-black px-6 py-2.5 text-xs font-semibold text-white shadow-[0_10px_20px_rgb(0_0_0_/_0.16)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+          className="ml-auto rounded-full bg-black px-6 py-2.5 text-xs font-black text-[#f7b801] shadow-[0_10px_20px_rgb(0_0_0_/_0.16)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isPosting ? "Posting..." : "Post"}
         </button>
@@ -519,7 +520,7 @@ function FeedPost({
   }
 
   return (
-    <article className="mb-4 rounded-[1.35rem] bg-white p-4 shadow-[0_16px_42px_rgb(30_41_59_/_0.09)] transition duration-300 hover:-translate-y-0.5 md:p-5">
+    <article className="app-card app-card-hover mb-4 rounded-[1.35rem] p-4 md:p-5">
       <div className="flex items-start gap-4">
         <GradientAvatar
           name={displayName}
@@ -532,27 +533,31 @@ function FeedPost({
                 <Link
                   to="/app/profile/$id"
                   params={{ id: author?.id || "me" }}
-                  className="text-base font-semibold hover:underline"
+                  className="text-base font-black text-black hover:underline"
                 >
                   {displayName}
                 </Link>
-                <BadgeCheck className="h-4 w-4 text-[#4aa3ff]" />
+                <BadgeCheck className="h-4 w-4 text-[#f7b801]" />
               </div>
-              <p className="text-sm font-medium text-slate-400">
+              <p className="text-sm font-semibold text-[var(--app-muted)]">
                 {author?.role || "Founder"} · {time}
               </p>
             </div>
             <button
               type="button"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-100 text-black transition hover:bg-black hover:text-white"
+              className="app-icon-button flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem]"
               aria-label="Post actions"
             >
               <MoreHorizontal className="h-5 w-5" />
             </button>
           </div>
 
-          <h2 className="mt-4 text-xl font-bold leading-tight text-black">{title}</h2>
-          {body && <p className="mt-2 text-sm font-medium leading-6 text-slate-600">{body}</p>}
+          <h2 className="mt-4 text-xl font-black leading-tight text-black">{title}</h2>
+          {body && (
+            <p className="mt-2 text-sm font-semibold leading-6 text-[var(--app-ink-soft)]">
+              {body}
+            </p>
+          )}
 
           {images && (
             <div className="mt-4 grid h-[210px] grid-cols-[0.9fr_0.9fr_1.45fr] gap-2 overflow-hidden rounded-[1.1rem] md:h-[260px]">
@@ -581,7 +586,7 @@ function FeedPost({
             </div>
           )}
 
-          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-semibold text-slate-400">
+          <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs font-bold text-[var(--app-muted)]">
             <span className="inline-flex items-center gap-2">
               <Eye className="h-5 w-5" /> {formatCount(currentStats.views)}
             </span>
@@ -591,7 +596,7 @@ function FeedPost({
               className={`inline-flex items-center gap-2 rounded-full px-2 py-1 transition ${
                 currentViewer.liked
                   ? "bg-[#ffe4ee] text-[#ee4f82]"
-                  : "hover:bg-slate-100 hover:text-black"
+                  : "hover:bg-[#fff4c8] hover:text-black"
               }`}
             >
               <Heart className={currentViewer.liked ? "h-5 w-5 fill-current" : "h-5 w-5"} />
@@ -600,7 +605,7 @@ function FeedPost({
             <button
               type="button"
               onClick={onCommentToggle}
-              className="inline-flex items-center gap-2 rounded-full px-2 py-1 transition hover:bg-slate-100 hover:text-black"
+              className="inline-flex items-center gap-2 rounded-full px-2 py-1 transition hover:bg-[#fff4c8] hover:text-black"
             >
               <MessageCircle className="h-5 w-5" />
               {currentStats.comments > 0
@@ -610,7 +615,7 @@ function FeedPost({
             <button
               type="button"
               onClick={onShare}
-              className="inline-flex items-center gap-2 rounded-full px-2 py-1 transition hover:bg-slate-100 hover:text-black"
+              className="inline-flex items-center gap-2 rounded-full px-2 py-1 transition hover:bg-[#fff4c8] hover:text-black"
             >
               <Share2 className="h-5 w-5" />
               {currentStats.shares > 0 ? `${formatCount(currentStats.shares)} Share` : "Share"}
@@ -618,12 +623,12 @@ function FeedPost({
           </div>
 
           {commentsOpen && (
-            <div className="mt-4 rounded-[1rem] bg-slate-50 p-3">
+            <div className="app-soft-panel mt-4 rounded-[1rem] p-3">
               <div className="space-y-2">
                 {(comments ?? []).map((comment) => (
-                  <div key={comment.id} className="rounded-xl bg-white px-3 py-2 text-sm">
-                    <p className="font-semibold text-slate-900">Community member</p>
-                    <p className="mt-1 text-slate-600">{comment.body}</p>
+                  <div key={comment.id} className="rounded-[0.9rem] bg-white px-3 py-2 text-sm">
+                    <p className="font-black text-black">Community member</p>
+                    <p className="mt-1 font-semibold text-[var(--app-ink-soft)]">{comment.body}</p>
                   </div>
                 ))}
               </div>
@@ -631,12 +636,12 @@ function FeedPost({
                 <input
                   value={commentDraft}
                   onChange={(event) => setCommentDraft(event.target.value)}
-                  className="min-w-0 flex-1 rounded-full bg-white px-4 py-2 text-sm font-semibold outline-none placeholder:text-slate-400"
+                  className="app-field min-w-0 flex-1 rounded-full px-4 py-2 text-sm font-semibold outline-none placeholder:text-[var(--app-placeholder)]"
                   placeholder="Write a comment"
                 />
                 <button
                   type="submit"
-                  className="rounded-full bg-black px-4 py-2 text-xs font-semibold text-white"
+                  className="rounded-full bg-black px-4 py-2 text-xs font-black text-[#f7b801]"
                 >
                   Send
                 </button>
@@ -654,7 +659,7 @@ function StoryCard({ src, profile }: { src: string; profile?: Profile }) {
     <Link
       to="/app/profile/$id"
       params={{ id: profile?.id || "me" }}
-      className="group relative h-28 w-24 shrink-0 overflow-hidden rounded-[1.1rem] shadow-[0_12px_26px_rgb(15_23_42_/_0.14)]"
+      className="group relative h-28 w-24 shrink-0 overflow-hidden rounded-[1.25rem] shadow-[0_12px_26px_rgb(15_23_42_/_0.14)] ring-1 ring-white/70"
     >
       <img
         src={src}
@@ -670,7 +675,7 @@ function StoryCard({ src, profile }: { src: string; profile?: Profile }) {
         size="sm"
         className="absolute left-3 top-3 ring-2 ring-white"
       />
-      <span className="absolute bottom-3 left-3 right-3 truncate text-xs font-semibold text-white">
+      <span className="absolute bottom-3 left-3 right-3 truncate text-xs font-black text-white">
         {profile?.full_name.split(" ")[0] || "Member"}
       </span>
     </Link>
@@ -679,21 +684,21 @@ function StoryCard({ src, profile }: { src: string; profile?: Profile }) {
 
 function SuggestionRow({ person, hot }: { person: Profile; hot?: boolean }) {
   return (
-    <div className="flex items-center gap-3 rounded-[1.05rem] bg-white p-2.5 shadow-[0_12px_28px_rgb(30_41_59_/_0.08)] transition hover:-translate-y-0.5">
+    <div className="app-card app-card-hover flex items-center gap-3 rounded-[1.05rem] p-2.5">
       <GradientAvatar name={person.full_name} colorClass={person.avatar_color} size="lg" />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <p className="truncate font-semibold text-black">{person.full_name}</p>
+          <p className="truncate font-black text-black">{person.full_name}</p>
           {hot && <Zap className="h-4 w-4 fill-[#ffb020] text-[#ffb020]" />}
         </div>
-        <p className="truncate text-xs font-semibold text-slate-400">
+        <p className="truncate text-xs font-semibold text-[var(--app-muted)]">
           {person.role} at {person.company}
         </p>
       </div>
       <Link
         to="/app/profile/$id"
         params={{ id: person.id }}
-        className="rounded-full bg-black px-3 py-1.5 text-xs font-semibold text-white"
+        className="rounded-full bg-black px-3 py-1.5 text-xs font-black text-[#f7b801]"
       >
         Follow
       </Link>
@@ -713,7 +718,7 @@ function RecommendationTile({
 }) {
   return (
     <button
-      className={`relative flex aspect-square flex-col items-center justify-center overflow-hidden rounded-[1.1rem] p-3 text-center shadow-[0_12px_28px_rgb(30_41_59_/_0.1)] transition hover:-translate-y-0.5 ${
+      className={`app-card-hover relative flex aspect-square flex-col items-center justify-center overflow-hidden rounded-[1.15rem] border border-[var(--app-border)] p-3 text-center shadow-[0_12px_28px_rgb(30_41_59_/_0.1)] ${
         item.className || "bg-white"
       }`}
     >
@@ -729,8 +734,8 @@ function RecommendationTile({
           <div className="absolute inset-0 bg-white/25" />
         </>
       )}
-      <item.icon className="relative h-5 w-5 text-black" />
-      <p className="relative mt-2 text-sm font-semibold text-black">{item.label}</p>
+      <item.icon className="relative h-5 w-5 text-current" />
+      <p className="relative mt-2 text-sm font-black text-current">{item.label}</p>
     </button>
   );
 }
@@ -748,7 +753,7 @@ function PostAction({
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+      className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-bold text-[var(--app-ink-soft)] transition hover:bg-[#fff4c8] hover:text-black"
     >
       <Icon className="h-5 w-5 text-black" />
       {label}

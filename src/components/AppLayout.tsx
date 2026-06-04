@@ -130,19 +130,19 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen overflow-x-hidden bg-[var(--app-canvas)] text-foreground">
       <div className="honeycomb-bg pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_9%_14%,rgb(247_184_1_/_0.3),transparent_30rem),radial-gradient(circle_at_92%_8%,rgb(17_17_17_/_0.1),transparent_34rem),linear-gradient(135deg,#fffef8,#fff4c8_48%,#ffffff)]" />
       <div className="min-h-screen w-full xl:pl-[260px] 2xl:pl-[280px]">
-        <aside className="fixed inset-y-0 left-0 z-30 hidden w-[260px] overflow-y-auto border-r border-sidebar-border bg-sidebar px-5 py-5 xl:flex xl:flex-col 2xl:w-[280px] 2xl:px-6">
+        <aside className="fixed inset-y-0 left-0 z-30 hidden w-[260px] overflow-y-auto border-r border-[var(--app-border)] bg-[oklch(0.99_0.016_88_/_0.94)] px-5 py-5 shadow-[12px_0_50px_oklch(0.22_0.035_80_/_0.08)] backdrop-blur-xl xl:flex xl:flex-col 2xl:w-[280px] 2xl:px-6">
           <Link to="/app/home" className="group flex items-center gap-3">
             <BrandMark glyphClassName="h-10" />
           </Link>
 
-          <div className="mt-7 flex items-center gap-3">
+          <div className="app-soft-panel mt-7 flex items-center gap-3 rounded-[1.15rem] p-3">
             <div className="relative">
               <GradientAvatar name={user.full_name} colorClass={user.avatar_color} size="lg" />
-              <span className="absolute -right-0.5 -top-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-[#f6bb4f]" />
+              <span className="absolute -right-1 -top-1 h-3.5 w-3.5 rounded-full border-2 border-white bg-[#f7b801]" />
             </div>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold">{user.full_name}</p>
-              <p className="truncate text-xs font-semibold text-slate-400">
+              <p className="truncate text-sm font-black text-[var(--app-ink)]">{user.full_name}</p>
+              <p className="truncate text-xs font-semibold text-[var(--app-muted)]">
                 @{user.id || "member"}
               </p>
             </div>
@@ -158,16 +158,16 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   to={n.to}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "group flex h-11 items-center gap-3 rounded-[0.9rem] px-4 text-[13px] font-semibold transition-all",
+                    "group flex h-11 items-center gap-3 rounded-[1rem] px-3.5 text-[13px] font-black transition-all",
                     active
-                      ? "bg-black text-[#f7b801] shadow-[0_10px_22px_oklch(0_0_0_/_0.16)]"
-                      : "text-slate-900 hover:bg-[#fff4c8]",
+                      ? "bg-black text-[#f7b801] shadow-[0_10px_24px_oklch(0.18_0.03_80_/_0.22)]"
+                      : "text-[var(--app-ink-soft)] hover:bg-[#fff4c8] hover:text-black",
                   )}
                 >
                   <n.icon
                     className={cn(
                       "h-4 w-4",
-                      active ? "text-white" : "text-slate-900 group-hover:text-black",
+                      active ? "text-[#f7b801]" : "text-[var(--app-muted)] group-hover:text-black",
                     )}
                   />
                   <span className="min-w-0 flex-1 truncate">{n.label}</span>
@@ -175,7 +175,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     <span
                       className={cn(
                         "flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-[11px]",
-                        active ? "bg-white text-black" : "bg-black text-white",
+                        active ? "bg-[#f7b801] text-black" : "bg-black text-white",
                       )}
                     >
                       {badge}
@@ -186,12 +186,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          <div className="mt-auto rounded-[1rem] border border-[#d8e2f5] bg-white p-4 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[0.9rem] bg-[#fff4c8] text-white shadow-lg">
+          <div className="app-card mt-auto rounded-[1.2rem] p-4 text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[1rem] bg-[#fff4c8] text-white shadow-lg ring-1 ring-[#f7b801]/25">
               <BeeGlyph className="h-8 w-10" />
             </div>
-            <p className="mt-3 text-sm font-semibold">Bee is online</p>
-            <p className="mt-1 text-xs font-semibold leading-5 text-slate-400">
+            <p className="mt-3 text-sm font-black text-black">Bee is online</p>
+            <p className="mt-1 text-xs font-semibold leading-5 text-[var(--app-muted)]">
               {pendingIntroCount > 0
                 ? `${pendingIntroCount} intro${pendingIntroCount === 1 ? "" : "s"} need review.`
                 : "Approval-gated intros are ready."}
@@ -199,7 +199,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
           <Button
             variant="ghost"
-            className="mt-3 h-10 justify-start rounded-[0.9rem] px-4 text-[13px] font-semibold text-slate-600 hover:bg-slate-100 hover:text-black"
+            className="mt-3 h-10 justify-start rounded-[1rem] px-4 text-[13px] font-bold text-[var(--app-muted)] hover:bg-[#fff4c8] hover:text-black"
             onClick={signOut}
           >
             <LogOut className="h-4 w-4" />
@@ -208,7 +208,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </aside>
 
         <div className="min-w-0">
-          <header className="sticky top-3 z-30 mx-3 mt-3 rounded-[1.5rem] border border-white/80 bg-white/90 px-3 py-3 shadow-[0_14px_40px_oklch(0.37_0.04_250_/_0.12)] backdrop-blur-xl xl:hidden">
+          <header className="app-card sticky top-3 z-30 mx-3 mt-3 rounded-[1.4rem] px-3 py-3 xl:hidden">
             <div className="flex items-center gap-2">
               <Link to="/app/home" className="flex items-center gap-2 rounded-full pr-1">
                 <BrandMark glyphClassName="h-9" />
@@ -216,20 +216,20 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <div className="ml-auto flex items-center gap-1">
                 <Link
                   to="/app/discover"
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600"
+                  className="app-icon-button flex h-10 w-10 items-center justify-center rounded-[0.9rem]"
                   aria-label="Search"
                 >
                   <Search className="h-5 w-5" />
                 </Link>
                 <Link
                   to="/app/inbox"
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600"
+                  className="app-icon-button flex h-10 w-10 items-center justify-center rounded-[0.9rem]"
                   aria-label="Notifications"
                 >
                   <Bell className="h-5 w-5" />
                 </Link>
                 <button
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600"
+                  className="app-icon-button flex h-10 w-10 items-center justify-center rounded-[0.9rem]"
                   aria-label="Menu"
                   onClick={() => setMobileMenuOpen(true)}
                 >
@@ -245,7 +245,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
-      <nav className="fixed bottom-3 left-3 right-3 z-30 grid grid-cols-5 rounded-[1.5rem] border border-white/80 bg-white/95 p-1 shadow-[0_20px_60px_oklch(0.25_0.04_260_/_0.22)] backdrop-blur-xl xl:hidden">
+      <nav className="app-card fixed bottom-3 left-3 right-3 z-30 grid grid-cols-5 rounded-[1.45rem] p-1 xl:hidden">
         {MOBILE_NAV.map((n) => {
           const active = isActive(n.to);
           const badge = badgeFor(n);
@@ -255,8 +255,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               to={n.to}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "relative flex flex-col items-center gap-1 rounded-[1.15rem] py-2 text-[10px] font-semibold",
-                active ? "bg-black text-white" : "text-slate-500",
+                "relative flex flex-col items-center gap-1 rounded-[1.05rem] py-2 text-[10px] font-black",
+                active ? "bg-black text-[#f7b801]" : "text-[var(--app-muted)]",
               )}
             >
               <n.icon className="h-5 w-5" /> {mobileLabel(n.to)}
@@ -276,21 +276,21 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           onClick={() => setMobileMenuOpen(false)}
         >
           <div
-            className="ml-auto flex h-full w-[min(22rem,calc(100vw-2rem))] flex-col bg-white p-5 shadow-[0_30px_90px_rgb(15_23_42_/_0.25)]"
+            className="ml-auto flex h-full w-[min(22rem,calc(100vw-2rem))] flex-col border-l border-[var(--app-border)] bg-[oklch(0.995_0.012_88)] p-5 shadow-[0_30px_90px_rgb(15_23_42_/_0.25)]"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-[0.9rem] bg-[#fff4c8] text-white">
+                <span className="flex h-10 w-10 items-center justify-center rounded-[0.9rem] bg-[#fff4c8] text-white ring-1 ring-[#f7b801]/25">
                   <BeeGlyph className="h-7 w-9" />
                 </span>
                 <div>
-                  <p className="text-sm font-bold">Get My Bee</p>
+                  <p className="text-sm font-black text-black">Get My Bee</p>
                   <p className="text-xs font-semibold text-[#8a6a00]">Builder Hive</p>
                 </div>
               </div>
               <button
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600"
+                className="app-icon-button flex h-10 w-10 items-center justify-center rounded-[0.9rem]"
                 aria-label="Close menu"
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -298,11 +298,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </button>
             </div>
 
-            <div className="mt-6 flex items-center gap-3 rounded-[1rem] bg-slate-100 p-3">
+            <div className="app-soft-panel mt-6 flex items-center gap-3 rounded-[1rem] p-3">
               <GradientAvatar name={user.full_name} colorClass={user.avatar_color} size="lg" />
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold">{user.full_name}</p>
-                <p className="truncate text-xs font-semibold text-slate-400">
+                <p className="truncate text-sm font-black text-black">{user.full_name}</p>
+                <p className="truncate text-xs font-semibold text-[var(--app-muted)]">
                   @{user.id || "member"}
                 </p>
               </div>
@@ -318,8 +318,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     to={n.to}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex h-11 items-center gap-3 rounded-[0.9rem] px-4 text-sm font-semibold",
-                      active ? "bg-black text-white" : "text-slate-700 hover:bg-slate-100",
+                      "flex h-11 items-center gap-3 rounded-[1rem] px-4 text-sm font-black",
+                      active
+                        ? "bg-black text-[#f7b801]"
+                        : "text-[var(--app-ink-soft)] hover:bg-[#fff4c8]",
                     )}
                   >
                     <n.icon className="h-4 w-4" />
@@ -328,7 +330,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                       <span
                         className={cn(
                           "flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-[11px]",
-                          active ? "bg-white text-black" : "bg-black text-white",
+                          active ? "bg-[#f7b801] text-black" : "bg-black text-white",
                         )}
                       >
                         {badge}
@@ -341,7 +343,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
             <Button
               variant="ghost"
-              className="mt-auto h-11 justify-start rounded-[0.9rem] px-4 font-semibold text-slate-600 hover:bg-slate-100 hover:text-black"
+              className="mt-auto h-11 justify-start rounded-[1rem] px-4 font-bold text-[var(--app-muted)] hover:bg-[#fff4c8] hover:text-black"
               onClick={signOut}
             >
               <LogOut className="h-4 w-4" />

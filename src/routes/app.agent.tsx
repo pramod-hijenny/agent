@@ -5,7 +5,6 @@ import { PermissionToggle } from "@/components/PermissionToggle";
 import { ActivityTimeline } from "@/components/ActivityTimeline";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { AiBadge } from "@/components/AiBadge";
 import { Bot, Loader2, Pause, Play, Send, Plus, Trash2, Zap } from "lucide-react";
 import { testAgent } from "@/lib/api";
@@ -52,32 +51,33 @@ export function AgentPage() {
   }
 
   return (
-    <div className="w-full space-y-4">
-      <section className="relative overflow-hidden rounded-[1.35rem] bg-black p-4 text-white shadow-[0_16px_44px_rgb(15_23_42_/_0.18)] md:p-5">
+    <div className="w-full space-y-5">
+      <section className="app-hero relative overflow-hidden rounded-[1.45rem] p-5 text-white shadow-[0_24px_70px_oklch(0.18_0.035_80_/_0.28)] md:p-6">
         <img
           src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1200&q=85"
           alt=""
-          className="absolute inset-0 h-full w-full object-cover opacity-45"
+          className="absolute inset-0 h-full w-full object-cover opacity-35 grayscale"
           loading="lazy"
           referrerPolicy="no-referrer"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/75 to-black/30" />
+        <div className="honeycomb-bg absolute inset-0 opacity-10 mix-blend-screen" />
+        <div className="absolute inset-0 bg-[linear-gradient(105deg,rgb(0_0_0_/_0.92),rgb(0_0_0_/_0.72)_56%,rgb(247_184_1_/_0.32))]" />
         <div className="relative flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#f7b801]/35 bg-[#f7b801]/15 px-3 py-1.5 text-xs font-black text-[#ffd766] backdrop-blur">
               <Bot className="h-4 w-4" /> AI representative
             </span>
-            <h1 className="mt-3 text-2xl font-bold tracking-tight md:text-3xl">My Bee</h1>
-            <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-white/70">
+            <h1 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">My Bee</h1>
+            <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-white/72">
               Configure the social agent that talks to other agents, remembers context, and drafts
               intros for your approval.
             </p>
           </div>
-          <div className="rounded-[1.1rem] bg-white/15 p-4 backdrop-blur-xl">
-            <p className="text-xl font-bold">
+          <div className="rounded-[1.15rem] border border-white/15 bg-white/12 p-4 backdrop-blur-xl">
+            <p className="text-2xl font-black text-[#f7b801]">
               {user.agent.status === "active" ? "Live" : "Paused"}
             </p>
-            <p className="text-sm font-medium text-white/65">current status</p>
+            <p className="text-sm font-semibold text-white/65">current status</p>
           </div>
         </div>
       </section>
@@ -89,11 +89,11 @@ export function AgentPage() {
             {user.agent.memory.map((m, i) => (
               <div
                 key={i}
-                className="flex items-center gap-2 rounded-xl border border-border bg-secondary/40 p-3 text-sm"
+                className="app-soft-panel flex items-center gap-2 rounded-[1rem] p-3 text-sm font-semibold text-[var(--app-ink-soft)]"
               >
                 <span className="flex-1">{m}</span>
                 <button
-                  className="text-muted-foreground hover:text-destructive"
+                  className="app-icon-button flex h-8 w-8 items-center justify-center rounded-[0.8rem] hover:text-white"
                   onClick={() =>
                     updateUser((u) => ({
                       ...u,
@@ -111,8 +111,8 @@ export function AgentPage() {
             <Input
               value={newMem}
               onChange={(e) => setNewMem(e.target.value)}
-              placeholder="Add a memory…"
-              className="rounded-xl"
+              placeholder="Add a memory..."
+              className="app-field rounded-[1rem] border-0 font-semibold shadow-none placeholder:text-[var(--app-placeholder)]"
             />
             <Button
               onClick={() => {
@@ -123,7 +123,7 @@ export function AgentPage() {
                 }));
                 setNewMem("");
               }}
-              className="rounded-xl"
+              className="rounded-[1rem] bg-black font-black text-[#f7b801] hover:bg-black/90"
             >
               <Plus className="h-4 w-4" /> Add
             </Button>
@@ -182,9 +182,9 @@ export function AgentPage() {
         </Panel>
 
         <Panel title="Test my bee">
-          <div className="space-y-2 max-h-72 overflow-y-auto">
+          <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
             {chat.length === 0 && (
-              <p className="text-sm text-muted-foreground">
+              <p className="app-soft-panel rounded-[1rem] p-3 text-sm font-semibold text-[var(--app-muted)]">
                 Try: "Find three mentors who can review my onboarding flow"
               </p>
             )}
@@ -194,7 +194,11 @@ export function AgentPage() {
                 className={m.from === "user" ? "flex justify-end" : "flex justify-start"}
               >
                 <div
-                  className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${m.from === "user" ? "bg-primary/10" : "bg-agent-soft"}`}
+                  className={`max-w-[80%] rounded-[1.1rem] px-3 py-2 text-sm font-semibold leading-6 shadow-sm ${
+                    m.from === "user"
+                      ? "bg-black text-white"
+                      : "border border-[#f7b801]/25 bg-[#fff4c8] text-black"
+                  }`}
                 >
                   {m.from === "agent" && <AiBadge className="mb-1" label={user.agent.agent_name} />}
                   <p>{m.text}</p>
@@ -203,9 +207,9 @@ export function AgentPage() {
             ))}
             {agentLoading && (
               <div className="flex justify-start">
-                <div className="inline-flex items-center gap-2 rounded-2xl bg-agent-soft px-3 py-2 text-sm font-medium">
+                <div className="inline-flex items-center gap-2 rounded-[1.1rem] border border-[#f7b801]/25 bg-[#fff4c8] px-3 py-2 text-sm font-bold text-black">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Agent is thinking...
+                  Bee is thinking...
                 </div>
               </div>
             )}
@@ -215,10 +219,14 @@ export function AgentPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && void sendTest()}
-              placeholder="Ask your agent…"
-              className="rounded-xl"
+              placeholder="Ask your bee..."
+              className="app-field rounded-[1rem] border-0 font-semibold shadow-none placeholder:text-[var(--app-placeholder)]"
             />
-            <Button onClick={() => void sendTest()} disabled={agentLoading} className="rounded-xl">
+            <Button
+              onClick={() => void sendTest()}
+              disabled={agentLoading}
+              className="rounded-[1rem] bg-black text-[#f7b801] hover:bg-black/90"
+            >
               <Send className="h-4 w-4" />
             </Button>
           </div>
@@ -236,7 +244,7 @@ export function AgentPage() {
           <div className="mt-4 flex flex-wrap gap-2">
             <Button
               variant="outline"
-              className="rounded-xl"
+              className="rounded-[1rem] border-[var(--app-border)] bg-white font-bold hover:bg-[#fff4c8]"
               onClick={() =>
                 updateUser((u) => ({
                   ...u,
@@ -254,7 +262,7 @@ export function AgentPage() {
                 </>
               )}
             </Button>
-            <Button variant="secondary" className="rounded-xl">
+            <Button variant="secondary" className="rounded-[1rem] bg-[#fff4c8] font-bold">
               New Mission
             </Button>
           </div>
@@ -266,8 +274,8 @@ export function AgentPage() {
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-[1.25rem] bg-white/90 p-4 shadow-[0_14px_36px_rgb(30_41_59_/_0.08)] backdrop-blur-xl">
-      <h2 className="mb-3 flex items-center gap-2 text-lg font-bold text-black">
+    <div className="app-card rounded-[1.35rem] p-4">
+      <h2 className="mb-3 flex items-center gap-2 text-lg font-black text-black">
         <Zap className="h-5 w-5 fill-[#ffb020] text-[#ffb020]" />
         {title}
       </h2>

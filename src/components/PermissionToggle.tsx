@@ -17,18 +17,20 @@ export function PermissionToggle({
   sensitive?: boolean;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 rounded-[1.25rem] bg-slate-100 p-3">
+    <div className="app-soft-panel flex items-start justify-between gap-4 rounded-[1.1rem] p-3">
       <div className="min-w-0">
-        <div className="flex items-center gap-2 text-sm font-semibold text-black">
+        <div className="flex items-center gap-2 text-sm font-black text-black">
           {label}
-          {locked && <Lock className="h-3 w-3 text-slate-400" />}
+          {locked && <Lock className="h-3 w-3 text-[var(--app-muted)]" />}
           {sensitive && !locked && (
-            <span className="rounded-full bg-[#fff3d5] px-2 py-0.5 text-[10px] font-semibold text-[#a35c00]">
+            <span className="rounded-full border border-[#f7b801]/25 bg-[#fff3d5] px-2 py-0.5 text-[10px] font-bold text-[#7a4d00]">
               Sensitive
             </span>
           )}
         </div>
-        {description && <p className="mt-1 text-xs font-semibold text-slate-500">{description}</p>}
+        {description && (
+          <p className="mt-1 text-xs font-semibold text-[var(--app-muted)]">{description}</p>
+        )}
       </div>
       <Switch checked={checked} onCheckedChange={onCheckedChange} disabled={locked} />
     </div>

@@ -115,6 +115,20 @@
   --success-soft: oklch(0.95 0.06 155);
 
   --app-canvas: oklch(0.96 0.024 88);
+  --app-ink: oklch(0.13 0.015 80);
+  --app-ink-soft: oklch(0.26 0.025 80);
+  --app-muted: oklch(0.5 0.035 82);
+  --app-placeholder: oklch(0.62 0.045 82);
+  --app-card: oklch(0.995 0.008 88 / 0.94);
+  --app-card-strong: oklch(1 0 0 / 0.98);
+  --app-card-soft: oklch(0.965 0.035 88 / 0.86);
+  --app-border: oklch(0.84 0.045 88 / 0.7);
+  --app-line: oklch(0.88 0.035 88 / 0.78);
+  --app-honey: oklch(0.82 0.17 82);
+  --app-honey-soft: oklch(0.94 0.085 88 / 0.78);
+  --app-honey-faint: oklch(0.975 0.045 88 / 0.9);
+  --app-shadow: 0 1px 0 oklch(1 0 0 / 0.75), 0 18px 48px oklch(0.22 0.035 80 / 0.12);
+  --app-shadow-hover: 0 1px 0 oklch(1 0 0 / 0.82), 0 24px 68px oklch(0.2 0.04 80 / 0.18);
   --gradient-hero: linear-gradient(135deg, oklch(0.99 0.01 88), oklch(0.9 0.11 88));
   --gradient-agent: linear-gradient(
     135deg,
@@ -186,6 +200,12 @@
   textarea {
     letter-spacing: 0;
   }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--app-placeholder);
+    opacity: 1;
+  }
 }
 
 @layer utilities {
@@ -215,5 +235,92 @@
   .honeycomb-bg {
     background-image: url("/honeycomb-pattern.svg");
     background-size: 180px 156px;
+  }
+
+  .app-card {
+    border: 1px solid var(--app-border);
+    background: var(--app-card);
+    box-shadow: var(--app-shadow);
+    backdrop-filter: blur(20px);
+  }
+
+  .app-card-solid {
+    border: 1px solid var(--app-border);
+    background: var(--app-card-strong);
+    box-shadow: var(--app-shadow);
+  }
+
+  .app-card-hover {
+    transition:
+      transform 220ms ease,
+      box-shadow 220ms ease,
+      border-color 220ms ease;
+  }
+
+  .app-card-hover:hover {
+    transform: translateY(-2px);
+    border-color: oklch(0.76 0.12 82 / 0.72);
+    box-shadow: var(--app-shadow-hover);
+  }
+
+  .app-soft-panel {
+    border: 1px solid var(--app-line);
+    background: var(--app-card-soft);
+  }
+
+  .app-field {
+    border: 1px solid oklch(0.85 0.045 88 / 0.8);
+    background: oklch(0.985 0.02 88 / 0.86);
+    color: var(--app-ink);
+    box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.85);
+  }
+
+  .app-field:focus-within {
+    border-color: oklch(0.78 0.16 82 / 0.72);
+    box-shadow:
+      inset 0 1px 0 oklch(1 0 0 / 0.9),
+      0 0 0 4px oklch(0.82 0.17 82 / 0.14);
+  }
+
+  .app-chip {
+    border: 1px solid oklch(0.86 0.05 88 / 0.75);
+    background: oklch(0.975 0.04 88 / 0.82);
+    color: var(--app-ink-soft);
+  }
+
+  .app-icon-button {
+    border: 1px solid var(--app-line);
+    background: oklch(0.985 0.018 88 / 0.9);
+    color: var(--app-ink-soft);
+    box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.82);
+    transition:
+      background 180ms ease,
+      color 180ms ease,
+      transform 180ms ease;
+  }
+
+  .app-icon-button:hover {
+    background: var(--app-ink);
+    color: white;
+    transform: translateY(-1px);
+  }
+
+  .app-kicker {
+    color: oklch(0.48 0.07 82);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .app-hero {
+    background:
+      linear-gradient(
+        115deg,
+        oklch(0.12 0.018 80 / 0.98),
+        oklch(0.16 0.026 80 / 0.82) 52%,
+        oklch(0.67 0.12 82 / 0.42)
+      ),
+      var(--app-ink);
   }
 }

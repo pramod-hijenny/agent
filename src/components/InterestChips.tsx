@@ -22,20 +22,16 @@ export function InterestChips({
             type="button"
             onClick={() => onToggle(it)}
             className={cn(
-              "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+              "rounded-full px-3 py-1 text-xs font-bold transition-colors",
               isSel
-                ? "bg-black text-white"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-black",
+                ? "bg-black text-[#f7b801]"
+                : "app-chip hover:border-[#f7b801]/50 hover:bg-[#fff4c8] hover:text-black",
             )}
           >
             {it}
           </button>
         ) : (
-          <Badge
-            key={it}
-            variant="secondary"
-            className="rounded-full bg-slate-100 font-medium text-slate-600"
-          >
+          <Badge key={it} variant="secondary" className="app-chip rounded-full font-bold">
             {it}
           </Badge>
         );

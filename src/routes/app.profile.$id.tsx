@@ -320,19 +320,18 @@ interface ProfileTheme {
 }
 
 const DEFAULT_PROFILE_THEME: ProfileTheme = {
-  page: "border-white/60 bg-[#dcecff] text-slate-950",
-  pageOverlay:
-    "opacity-80 [background-image:radial-gradient(circle_at_18%_10%,rgb(255_255_255_/_0.7),transparent_20rem),radial-gradient(circle_at_80%_20%,rgb(125_211_252_/_0.24),transparent_24rem)]",
-  heroCard: "border-white/80 bg-white/85",
+  page: "border-[var(--app-border)] bg-[#fff8dc] text-slate-950",
+  pageOverlay: "honeycomb-bg opacity-45",
+  heroCard: "border-[var(--app-border)] bg-[var(--app-card)]",
   panel:
-    "border border-white/70 bg-white/88 text-slate-900 shadow-[0_18px_44px_rgb(15_23_42_/_0.12)]",
-  panelTitle: "text-slate-500",
-  stat: "bg-white/70 text-black",
-  tabRail: "bg-slate-100/75",
-  tabActive: "bg-white text-black shadow-sm",
-  tabInactive: "text-slate-500 hover:text-black",
+    "border border-[var(--app-border)] bg-[var(--app-card)] text-slate-900 shadow-[var(--app-shadow)]",
+  panelTitle: "text-[var(--app-muted)]",
+  stat: "border border-[var(--app-line)] bg-[#fff4c8]/80 text-black",
+  tabRail: "border border-[var(--app-line)] bg-[#fff4c8]/55",
+  tabActive: "bg-black text-[#f7b801] shadow-sm",
+  tabInactive: "text-[var(--app-muted)] hover:text-black",
   primaryButton: "bg-black text-white hover:bg-black/90",
-  secondaryButton: "bg-slate-100 text-slate-900 hover:bg-white",
+  secondaryButton: "bg-[#fff4c8] text-slate-900 hover:bg-[#ffe69b]",
   profileWindow: "border border-black/10 bg-[#071827]",
   cover:
     "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1400&q=85",
@@ -340,14 +339,14 @@ const DEFAULT_PROFILE_THEME: ProfileTheme = {
   overlay: "bg-gradient-to-t from-black/80 via-black/25 to-transparent",
   avatarFrame: "",
   name: "font-black",
-  live: "bg-black text-white",
+  live: "bg-black text-[#f7b801]",
   status: "agent live",
   badges: ["community", "builder", "open to intros"],
   marquee: "A profile page built from goals, context, and clear networking intent",
   playlist: ["Community Signal", "Warm Intro Hour", "Profile Notes"],
   mood: "Community signal board",
   stamp: "open to useful intros",
-  studio: "bg-[linear-gradient(135deg,#ecfeff,#f8fafc_52%,#eef2ff)]",
+  studio: "bg-[linear-gradient(135deg,#fffaf0,#fff4c8_52%,#ffffff)]",
 };
 
 function getProfileTheme(profileId: string): ProfileTheme {
@@ -588,7 +587,7 @@ function MiniPanel({
   return (
     <div className={cn("rounded-[1rem] p-4 backdrop-blur-xl", theme.panel)}>
       <div className="mb-3 flex items-center gap-2">
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black text-white">
+        <span className="flex h-9 w-9 items-center justify-center rounded-[0.9rem] bg-black text-[#f7b801]">
           <Icon className="h-4 w-4" />
         </span>
         <h3 className={cn("text-sm font-semibold uppercase tracking-[0.12em]", theme.panelTitle)}>
@@ -612,15 +611,15 @@ function Card({
   return (
     <div
       className={cn(
-        "rounded-[1.25rem] p-4 shadow-[0_14px_36px_rgb(30_41_59_/_0.08)] backdrop-blur-xl",
-        theme?.panel ?? "bg-white/90",
+        "rounded-[1.25rem] p-4 shadow-[var(--app-shadow)] backdrop-blur-xl",
+        theme?.panel ?? "app-card",
       )}
     >
       {title && (
         <h2
           className={cn(
             "mb-3 text-sm font-semibold uppercase tracking-[0.12em]",
-            theme?.panelTitle ?? "text-slate-400",
+            theme?.panelTitle ?? "text-[var(--app-muted)]",
           )}
         >
           {title}

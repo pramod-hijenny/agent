@@ -117,22 +117,23 @@ export function Discover() {
   }
 
   return (
-    <div className="w-full space-y-4">
-      <section className="relative overflow-hidden rounded-[1.35rem] bg-black p-4 text-white shadow-[0_16px_44px_rgb(15_23_42_/_0.18)] md:p-5">
+    <div className="w-full space-y-5">
+      <section className="app-hero relative overflow-hidden rounded-[1.45rem] p-5 text-white shadow-[0_24px_70px_oklch(0.18_0.035_80_/_0.28)] md:p-6">
         <img
           src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&q=85"
           alt=""
-          className="absolute inset-0 h-full w-full object-cover opacity-45"
+          className="absolute inset-0 h-full w-full object-cover opacity-35 grayscale"
           loading="lazy"
           referrerPolicy="no-referrer"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-black/35" />
+        <div className="honeycomb-bg absolute inset-0 opacity-10 mix-blend-screen" />
+        <div className="absolute inset-0 bg-[linear-gradient(105deg,rgb(0_0_0_/_0.92),rgb(0_0_0_/_0.72)_56%,rgb(247_184_1_/_0.32))]" />
         <div className="relative grid gap-4 lg:grid-cols-[1fr_270px]">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#f7b801]/35 bg-[#f7b801]/15 px-3 py-1.5 text-xs font-black text-[#ffd766] backdrop-blur">
               <Compass className="h-4 w-4" /> Discover inside {DEMO_COMMUNITY.name}
             </span>
-            <h1 className="mt-3 max-w-3xl text-2xl font-bold leading-tight tracking-tight md:text-3xl">
+            <h1 className="mt-3 max-w-3xl text-3xl font-black leading-tight tracking-tight md:text-4xl">
               Find people worth meeting this week.
             </h1>
             <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-white/70">
@@ -140,14 +141,16 @@ export function Discover() {
               drafts intros you can approve.
             </p>
           </div>
-          <div className="rounded-[1.1rem] border border-white/25 bg-white/15 p-4 backdrop-blur-xl">
+          <div className="rounded-[1.15rem] border border-white/15 bg-white/12 p-4 backdrop-blur-xl">
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#7df3c8] text-black">
+              <span className="flex h-10 w-10 items-center justify-center rounded-[0.9rem] bg-[#f7b801] text-black">
                 <Zap className="h-5 w-5 fill-current" />
               </span>
               <div>
-                <p className="text-xl font-bold">{loading ? "..." : matches.length}</p>
-                <p className="text-sm font-medium text-white/65">
+                <p className="text-2xl font-black text-[#f7b801]">
+                  {loading ? "..." : matches.length}
+                </p>
+                <p className="text-sm font-semibold text-white/65">
                   {backendSearchActive ? "backend matches" : "ranked matches"}
                 </p>
               </div>
@@ -159,20 +162,18 @@ export function Discover() {
         </div>
       </section>
 
-      <section className="rounded-[1.35rem] border border-white/80 bg-white/90 p-4 shadow-[0_14px_36px_rgb(41_55_92_/_0.1)] backdrop-blur-xl">
+      <section className="app-card rounded-[1.35rem] p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-              Search request
-            </p>
-            <p className="text-sm font-medium text-slate-500">Matching brief</p>
+            <p className="app-kicker">Search request</p>
+            <p className="text-sm font-semibold text-[var(--app-muted)]">Matching brief</p>
           </div>
-          <span className="rounded-full bg-[#e8fff6] px-3 py-1 text-xs font-semibold text-[#047857]">
+          <span className="rounded-full border border-[#f7b801]/25 bg-[#fff4c8] px-3 py-1 text-xs font-black text-black">
             {backendSearchActive ? "Backend search" : "Ranked search"}
           </span>
         </div>
-        <div className="flex items-start gap-3 rounded-[1.1rem] bg-slate-100 p-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black text-white">
+        <div className="app-field flex items-start gap-3 rounded-[1.15rem] p-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[0.8rem] bg-black text-[#f7b801]">
             <Search className="h-5 w-5" />
           </span>
           <textarea
@@ -183,13 +184,13 @@ export function Discover() {
               setDraftQuery(e.target.value);
             }}
             rows={2}
-            className="min-h-16 flex-1 resize-none bg-transparent p-1 text-[15px] font-medium leading-6 text-black outline-none placeholder:text-slate-400"
+            className="min-h-16 flex-1 resize-none bg-transparent p-1 text-[15px] font-semibold leading-6 text-black outline-none placeholder:text-[var(--app-placeholder)]"
             placeholder="Describe who you want to meet"
           />
         </div>
         <div className="mt-3 flex flex-col gap-2 md:flex-row md:items-end">
-          <label className="flex flex-1 items-center gap-2 rounded-full bg-slate-100 px-4 py-2">
-            <MapPin className="h-4 w-4 text-slate-500" />
+          <label className="app-field flex flex-1 items-center gap-2 rounded-full px-4 py-2">
+            <MapPin className="h-4 w-4 text-[var(--app-muted)]" />
             <Input
               aria-label="City"
               value={city}
@@ -197,7 +198,7 @@ export function Discover() {
                 resetBackendResults();
                 setCity(e.target.value);
               }}
-              className="h-auto border-0 bg-transparent p-0 font-semibold shadow-none focus-visible:ring-0"
+              className="h-auto border-0 bg-transparent p-0 font-bold shadow-none focus-visible:ring-0"
             />
           </label>
           <div className="min-w-52">
@@ -208,7 +209,7 @@ export function Discover() {
                 setGoal(v as Goal | "any");
               }}
             >
-              <SelectTrigger className="rounded-full border-0 bg-slate-100 font-semibold">
+              <SelectTrigger className="app-field rounded-full border-0 font-bold shadow-none">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -223,7 +224,7 @@ export function Discover() {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-3 rounded-full bg-slate-100 px-4 py-2">
+          <div className="app-field flex items-center gap-3 rounded-full px-4 py-2">
             <Switch
               checked={verifiedOnly}
               onCheckedChange={(value) => {
@@ -231,12 +232,12 @@ export function Discover() {
                 setVerifiedOnly(value);
               }}
             />
-            <span className="text-sm font-semibold">Verified only</span>
+            <span className="text-sm font-bold text-black">Verified only</span>
           </div>
           <button
             onClick={findMatches}
             disabled={loading}
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-black text-[#f7b801] transition hover:-translate-y-0.5"
           >
             <Search className="h-4 w-4" /> {loading ? "Finding..." : "Find matches"}
           </button>
@@ -244,10 +245,10 @@ export function Discover() {
       </section>
 
       <div className="flex items-center justify-between px-1">
-        <p className="text-sm font-semibold text-slate-500">
+        <p className="text-sm font-bold text-[var(--app-muted)]">
           {loading ? "Refreshing matches..." : `${matches.length} useful matches in your community`}
         </p>
-        <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-slate-500 shadow-sm">
+        <span className="app-chip inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold shadow-sm">
           <Camera className="h-3.5 w-3.5" /> Visual profiles
         </span>
       </div>

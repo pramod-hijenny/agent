@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-AgentCircle — an AI-mediated social discovery app for startup communities. Users configure an AI social representative, discover compatible people, review agent-to-agent context, and approve introductions before anything is sent.
+AgentCircle (user-facing brand: **Get My Bee**; npm package name `get-my-bee`) — an AI-mediated social discovery app for startup communities. Users configure an AI social representative, discover compatible people, review agent-to-agent context, and approve introductions before anything is sent.
 
 The repo is a React frontend (root) with two backends:
 - **InsForge** (primary BaaS) — database, auth, storage, realtime, functions
-- **FastAPI** (`backend/`) — LangChain agent workflows, discovery scoring, intro drafting, A2A endpoint
+- **FastAPI** (`backend/`) — LangChain agent workflows, discovery scoring, intro drafting, A2A endpoint. Deployed alongside the frontend (see Deployment).
 
-The frontend currently uses `localStorage` (`src/lib/store.ts`) and mock data (`src/lib/mock-data.ts`) as fallbacks; InsForge and the FastAPI backend are the intended targets for all data.
+The frontend uses `localStorage` (`src/lib/store.ts`) and mock data (`src/lib/mock-data.ts`) as fallbacks; InsForge and the FastAPI backend are the intended targets for all data.
 
 ## Frontend
 
@@ -29,9 +29,7 @@ Vite + React 19 + TypeScript, Tailwind v4, shadcn-style primitives over Radix, B
 
 - `VITE_INSFORGE_URL` — InsForge API base (e.g. `https://mep6b952.us-east.insforge.app`)
 - `VITE_INSFORGE_ANON_KEY` — Anonymous JWT key for InsForge SDK
-- `VITE_API_URL` (optional) — Override default API endpoint for FastAPI calls
-- `VITE_RTRVR_API_KEY` — rtrvr.ai API key for browser-automation social sync; obtain from the rtrvr Chrome extension popup
-- `VITE_RTRVR_DEVICE_ID` — rtrvr device ID (from extension popup); identifies the browser instance to drive
+- `VITE_API_URL` (optional) — Override default API endpoint for FastAPI calls (defaults to the Render backend URL)
 
 ### Routing & app shell
 
@@ -51,9 +49,10 @@ When adding a route: create file in `src/routes/`, import in `App.tsx`, add bran
 - `src/lib/matching.ts` — client-side match scoring against mock data
 - `src/lib/a2a.ts` — A2A Agent Card discovery helpers
 - `src/lib/mock-data.ts` — seed profiles for prototype
-- `src/lib/social-posts.ts` — `SocialPost` / `SocialSyncRun` types and InsForge queries for LinkedIn, X/Twitter, and other platforms
-- `src/lib/rtrvr.ts` — rtrvr.ai MCP client; extracts social posts from open Chrome tabs via browser automation
+- `src/lib/social-posts.ts` — `AgentPost` types and InsForge queries for the in-app agent-authored social feed (visibility, tags, stats, viewer state)
 - `src/hooks/useMediaAssets.ts` — uploads to InsForge Storage and manages metadata in `media_assets`
+
+Note: the rtrvr.ai browser-automation social sync was removed in commit `a13b81f`; ignore lingering `VITE_RTRVR_*` entries in `.env` if present.
 
 ### UI conventions
 
@@ -78,8 +77,7 @@ Migrations live in `migrations/` and are applied via the InsForge CLI. Key table
 - `profiles` — user profiles; stores `agent` persona and `permissions` as JSONB columns. Public select, owner-only write via RLS.
 - `intro_requests` — proposed introductions with `from_user_id`, `to_user_id`, `message`, `status` (`pending`/`accepted`/`rejected`), and audit fields.
 - `media_assets` — file upload metadata (bucket, object_key, owner_user_id, content_type, url)
-- `social_posts` — social media posts synced from external platforms (user_id, platform, external_post_id, engagement metrics, fetched_at)
-- `social_sync_runs` — audit log of each platform sync (status, post_count, error_message, started_at, finished_at)
+- Agent post / interaction tables for the in-app social feed (see `migrations/20260513112000_social-network-rebuild.sql` and `migrations/20260601002000_agent-post-interactions.sql`)
 
 All tables use RLS keyed to `auth.uid()`. When adding a table: write a timestamped migration (`YYYYMMDDHHmmss_name.sql`), run via CLI, update TypeScript types.
 
@@ -95,16 +93,23 @@ uv sync
 uvicorn app.main:app --reload   # runs on :8000
 ```
 
-### Environment variables (`backend/.env`)
+### Environment variables (`backend/.env` — see `backend/.env.example`)
 
-- `OPENAI_API_KEY` — LLM key for intro drafting (falls back to template if absent)
-- `OPENAI_MODEL` — model name, e.g. `gpt-4o-mini`; leave empty to disable LLM drafting
-- `OPENAI_BASE_URL` — defaults to `https://api.tokenrouter.com/v1`
+LLM provider is **Nebius AI Token Factory** (OpenAI-compatible endpoint). The variables keep the `OPENAI_*` names because the OpenAI SDK is the client.
+
+- `NEBIUS_API_KEY` — Nebius API key (canonical source)
+- `OPENAI_API_KEY` — set to the same value as `NEBIUS_API_KEY` (consumed by the OpenAI SDK)
+- `OPENAI_BASE_URL` — `https://api.tokenfactory.nebius.com/v1/`
+- `OPENAI_MODEL` — model id, e.g. `meta-llama/Meta-Llama-3.1-70B-Instruct`; leave empty to disable LLM drafting (falls back to template)
+- `OPENAI_TIMEOUT_SECONDS` — request timeout (default 30)
 - `INSFORGE_URL` — InsForge API base for token validation
 - `JWT_SECRET` / `JWT_ALGORITHM` — local JWT signing (used for non-InsForge tokens)
 - `FRONTEND_ORIGIN` — CORS allowed origin (default: `http://localhost:5173`)
 - `APP_ENV` — set to anything except `production` to enable the `demo-agentcircle-local` token bypass
 - `PUBLIC_BASE_URL` — used to build A2A agent card URLs
+- `DATABASE_URL` / `SYNC_DATABASE_URL` — Postgres (async/sync) for backend-owned tables
+- `REDIS_URL` — Redis URL
+- `LANGSMITH_TRACING` — toggle LangSmith tracing
 
 ### Agent workflow architecture
 
@@ -132,25 +137,18 @@ Implements the Agent-to-Agent (A2A) protocol at `backend/app/api/routes/a2a.py`:
 
 ## Deployment
 
-### Frontend (InsForge / Vercel)
+Primary deploy target is **Render** (see commit `6d7670a` and `README.md` Deployment section).
 
-The CLI blocks deploying from `dist/` by name, and the project root exceeds the 5,000-file limit (30k+ `node_modules` files) — even with `.deployignore`. Workaround:
+- **Frontend** — Render Static Site at `https://agentmatch-circle.onrender.com` (built from `dist/` via `bun run build`)
+- **Backend** — Render Web Service at `https://agentmatch-circle-backend.onrender.com` (runs `uvicorn app.main:app`)
 
-```bash
-bun run build
-cp -r dist .deploy-output
-npx @insforge/cli deployments deploy .deploy-output
-rm -rf .deploy-output
-```
+Frontend `VITE_API_URL` should point at the backend Render URL in production.
 
-Live URL: `https://mep6b952.insforge.site`
+Legacy / alternate paths (still configured but not the primary):
+- InsForge static deploy at `https://mep6b952.insforge.site` — the CLI blocks deploying from `dist/` by name and the project root exceeds the 5,000-file limit, so the workaround is to copy `dist/` to a differently-named folder before deploying.
+- Cloudflare Pages via `wrangler.jsonc` (serves `dist/` with SPA fallback).
 
-Also configured for Cloudflare Pages via `wrangler.jsonc` (serves `dist/` with SPA fallback). Don't edit `dist/` directly.
-
-### Backend
-
-The app uses InsForge for database, auth, storage, and backend tasks. The
-optional Python backend is not part of the default deploy path.
+Don't edit `dist/` directly.
 
 ## Specs (`spec/`)
 

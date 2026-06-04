@@ -1,5 +1,6 @@
 import { Link } from "@/lib/navigation";
 import { Button } from "@/components/ui/button";
+import { BeeGlyph, BrandMark } from "@/components/BrandMark";
 import {
   ArrowRight,
   BadgeCheck,
@@ -9,7 +10,6 @@ import {
   MessageCircle,
   Play,
   ShieldCheck,
-  Sparkles,
   Users,
   Zap,
 } from "lucide-react";
@@ -22,24 +22,19 @@ const HERO_IMAGES = [
 
 export function Landing() {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#eef4ff] text-black">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,#ffb6d5_0,transparent_28rem),radial-gradient(circle_at_90%_18%,#b8e5ff_0,transparent_32rem),linear-gradient(135deg,#f8fbff,#d9e8ff_48%,#f7eefc)]" />
-      <div className="absolute inset-0 opacity-[0.22] [background-image:linear-gradient(#1f2937_1px,transparent_1px),linear-gradient(90deg,#1f2937_1px,transparent_1px)] [background-size:54px_54px]" />
+    <div className="relative min-h-screen overflow-hidden bg-[#fffaf0] text-[#111111]">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_10%,rgb(247_184_1_/_0.28)_0,transparent_26rem),radial-gradient(circle_at_88%_16%,rgb(17_17_17_/_0.1)_0,transparent_30rem),linear-gradient(135deg,#fffef8,#fff4c8_52%,#ffffff)]" />
+      <div className="honeycomb-bg absolute inset-0 opacity-55" />
 
       <header className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-5 py-5 md:px-8">
-        <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-black text-white shadow-xl">
-            <Sparkles className="h-5 w-5" />
-          </span>
-          <span className="text-xl font-black tracking-tight">AgentCircle</span>
-        </div>
+        <BrandMark />
         <div className="flex items-center gap-2">
-          <Button asChild variant="ghost" className="rounded-full font-black">
+          <Button asChild variant="ghost" className="rounded-full font-black hover:bg-[#f7b801]/20">
             <Link to="/auth">Sign in</Link>
           </Button>
           <Button
             asChild
-            className="rounded-full bg-black px-5 font-black text-white hover:bg-black/85"
+            className="rounded-full bg-[#111111] px-5 font-black text-white hover:bg-[#111111]/85"
           >
             <Link to="/auth">
               Enter feed <ArrowRight className="h-4 w-4" />
@@ -49,26 +44,30 @@ export function Landing() {
       </header>
 
       <main className="relative z-10 mx-auto grid min-h-[calc(100vh-84px)] max-w-7xl items-center gap-8 px-5 pb-10 md:px-8 lg:grid-cols-[minmax(0,1fr)_520px]">
-        <section className="relative min-h-[680px] overflow-hidden rounded-[2rem] bg-black text-white shadow-[0_32px_90px_rgb(38_52_78_/_0.28)] md:rounded-[3rem]">
+        <section className="relative min-h-[680px] overflow-hidden rounded-[2rem] bg-[#111111] text-white shadow-[0_32px_90px_rgb(17_17_17_/_0.28)] md:rounded-[3rem]">
           <img
             src={HERO_IMAGES[0]}
             alt=""
-            className="absolute inset-0 h-full w-full object-cover opacity-75"
+            className="absolute inset-0 h-full w-full object-cover opacity-28 grayscale"
             loading="eager"
             referrerPolicy="no-referrer"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgb(0_0_0_/_0.78),rgb(0_0_0_/_0.22)_54%,rgb(0_0_0_/_0.55))]" />
+          <div className="absolute inset-0 bg-[linear-gradient(115deg,rgb(17_17_17_/_0.96),rgb(17_17_17_/_0.72)_58%,rgb(247_184_1_/_0.45))]" />
+          <div className="honeycomb-bg absolute inset-0 opacity-20 mix-blend-screen" />
           <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-black to-transparent" />
+          <div className="absolute -right-20 -top-12 hidden rotate-[-12deg] opacity-95 md:block">
+            <BeeGlyph className="h-52 w-64" />
+          </div>
 
           <div className="relative flex min-h-[680px] flex-col justify-between p-6 md:p-10 lg:p-12">
-            <div className="flex w-fit items-center gap-2 rounded-full border border-white/25 bg-white/15 px-4 py-2 text-sm font-black backdrop-blur-xl">
-              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#7df3c8]" />
-              AI social networking for builders
+            <div className="flex w-fit items-center gap-2 rounded-full border border-[#f7b801]/50 bg-[#f7b801]/15 px-4 py-2 text-sm font-black text-[#ffe08a] backdrop-blur-xl">
+              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#f7b801]" />
+              Get My Bee for founder networks
             </div>
 
-            <div className="max-w-3xl">
+            <div className="max-w-[42rem]">
               <h1 className="text-5xl font-black leading-[0.95] tracking-tight md:text-7xl">
-                A social feed for warm startup intros.
+                Find your next warm intro in the hive.
               </h1>
               <p className="mt-5 max-w-2xl text-lg font-semibold leading-8 text-white/78">
                 Browse stories, react to founder updates, discover high-fit people, and approve
@@ -77,25 +76,24 @@ export function Landing() {
               <div className="mt-7 flex flex-wrap items-center gap-3">
                 <Button
                   asChild
-                  className="h-12 rounded-full bg-white px-6 text-sm font-black text-black hover:bg-white/90"
+                  className="h-12 rounded-full bg-[#f7b801] px-6 text-sm font-black text-[#111111] hover:bg-[#ffd14a]"
                 >
                   <Link to="/auth">
                     Try live demo <Play className="h-4 w-4 fill-current" />
                   </Link>
                 </Button>
-                <span className="inline-flex h-12 items-center gap-2 rounded-full bg-white/15 px-5 text-sm font-black backdrop-blur-xl">
+                <span className="inline-flex h-12 items-center gap-2 rounded-full border border-white/15 bg-white/10 px-5 text-sm font-black backdrop-blur-xl">
                   <ShieldCheck className="h-4 w-4" /> Human approval first
                 </span>
               </div>
             </div>
           </div>
-
-          <FloatingProfile />
-          <StoryPreview />
         </section>
 
         <section className="space-y-5">
-          <div className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_26px_80px_rgb(41_55_92_/_0.18)] backdrop-blur-xl">
+          <HeroPreviewStack />
+
+          <div className="rounded-[2rem] border border-[#111111]/10 bg-white/95 p-6 shadow-[0_26px_80px_rgb(17_17_17_/_0.12)] backdrop-blur-xl">
             <div className="flex items-center justify-between">
               <h2 className="text-3xl font-black tracking-tight">What feels different</h2>
               <Users className="h-7 w-7" />
@@ -112,8 +110,8 @@ export function Landing() {
                   "Your AI can draft, but you approve every sensitive action.",
                 ],
               ].map(([title, desc], index) => (
-                <div key={title} className="flex gap-4 rounded-[1.4rem] bg-slate-100 p-4">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-black font-black text-white">
+                <div key={title} className="flex gap-4 rounded-[1.4rem] bg-[#fff4c8] p-4">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#111111] font-black text-[#f7b801]">
                     {index + 1}
                   </span>
                   <div>
@@ -133,19 +131,19 @@ export function Landing() {
             ].map(([value, label]) => (
               <div
                 key={label}
-                className="rounded-[1.4rem] bg-white/90 p-4 text-center shadow-[0_16px_40px_rgb(41_55_92_/_0.12)]"
+                className="rounded-[1.4rem] bg-white/95 p-4 text-center shadow-[0_16px_40px_rgb(17_17_17_/_0.1)]"
               >
                 <p className="text-3xl font-black">{value}</p>
-                <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-[#8a6a00]">
                   {label}
                 </p>
               </div>
             ))}
           </div>
 
-          <div className="rounded-[2rem] bg-black p-6 text-white shadow-[0_26px_70px_rgb(0_0_0_/_0.22)]">
+          <div className="rounded-[2rem] bg-[#111111] p-6 text-white shadow-[0_26px_70px_rgb(0_0_0_/_0.22)]">
             <div className="flex items-center gap-3">
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#ff78a8]">
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f7b801] text-[#111111]">
                 <Zap className="h-6 w-6 fill-current" />
               </span>
               <div>
@@ -162,14 +160,17 @@ export function Landing() {
 
 function FloatingProfile() {
   return (
-    <div className="absolute bottom-6 right-6 hidden w-80 rounded-[1.7rem] bg-white p-4 text-black shadow-2xl md:block">
+    <div
+      data-testid="landing-profile-preview"
+      className="w-full rounded-[1.7rem] bg-white p-4 text-black shadow-2xl"
+    >
       <div className="flex items-center gap-3">
         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#ff8fb3] font-black text-white">
           M
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate font-black">Maya Chen</p>
-          <p className="truncate text-sm font-bold text-slate-400">Pre-seed founder</p>
+          <p className="truncate text-sm font-bold text-[#8a6a00]">Pre-seed founder</p>
         </div>
         <BadgeCheck className="h-5 w-5 text-[#4aa3ff]" />
       </div>
@@ -178,7 +179,7 @@ function FloatingProfile() {
       </p>
       <div className="mt-4 flex items-center gap-4 text-sm font-black text-slate-500">
         <span className="inline-flex items-center gap-1.5">
-          <Heart className="h-4 w-4 fill-[#ff6f91] text-[#ff6f91]" /> 2.8k
+          <Heart className="h-4 w-4 fill-[#f7b801] text-[#111111]" /> 2.8k
         </span>
         <span className="inline-flex items-center gap-1.5">
           <MessageCircle className="h-4 w-4" /> 84
@@ -191,10 +192,13 @@ function FloatingProfile() {
 
 function StoryPreview() {
   return (
-    <div className="absolute right-6 top-24 hidden w-72 rounded-[1.7rem] border border-white/25 bg-white/18 p-4 shadow-2xl backdrop-blur-2xl xl:block">
+    <div
+      data-testid="landing-story-preview"
+      className="w-full rounded-[1.7rem] border border-[#f7b801]/50 bg-[#111111] p-4 text-white shadow-2xl"
+    >
       <div className="flex items-center justify-between">
         <p className="font-black">Stories</p>
-        <Camera className="h-5 w-5 text-white/75" />
+        <Camera className="h-5 w-5 text-[#f7b801]" />
       </div>
       <div className="mt-4 grid grid-cols-3 gap-2">
         {HERO_IMAGES.map((src, index) => (
@@ -206,15 +210,24 @@ function StoryPreview() {
               loading="lazy"
               referrerPolicy="no-referrer"
             />
-            <span className="-mt-8 ml-2 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[10px] font-black text-black">
+            <span className="-mt-8 ml-2 flex h-6 w-6 items-center justify-center rounded-full bg-[#f7b801] text-[10px] font-black text-black">
               {index + 1}
             </span>
           </div>
         ))}
       </div>
-      <div className="mt-4 flex items-center gap-2 rounded-full bg-white/15 px-3 py-2 text-xs font-black">
+      <div className="mt-4 flex items-center gap-2 rounded-full bg-[#f7b801]/20 px-3 py-2 text-xs font-black text-[#ffe08a]">
         <Lock className="h-3.5 w-3.5" /> Consent-first intros
       </div>
+    </div>
+  );
+}
+
+function HeroPreviewStack() {
+  return (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1">
+      <StoryPreview />
+      <FloatingProfile />
     </div>
   );
 }

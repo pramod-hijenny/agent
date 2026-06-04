@@ -83,20 +83,16 @@ Current route mapping:
 
 Chosen MVP backend:
 
-- AgentCircle uses a Python FastAPI backend with Postgres as the source of truth.
-- Community, membership, profile, discovery, intro, permission, and audit data live in Postgres.
-- Redis and Celery are optional infrastructure for realtime events and async jobs, not required for the first local demo.
+- AgentCircle uses InsForge as the source of truth for database, auth, storage, and backend tasks.
+- Community, membership, profile, discovery, intro, permission, feed, and audit data live in InsForge Postgres.
+- Custom Python services are optional experiments, not the default MVP backend path.
 - Neo4j or another graph database is not part of the MVP. Relationship data should be modeled in Postgres first.
 
-- Language: Python
-- API framework: FastAPI-style backend structure
-- Database target: Postgres
-- Cache and realtime target: Redis
-- Migrations: Alembic
-- Workers: Celery scaffold
-- Tests: pytest
-- Linting: ruff
-- Local orchestration: Docker Compose
+- Backend platform: InsForge
+- Database target: InsForge Postgres
+- Storage target: InsForge Storage
+- Migrations: InsForge CLI migrations
+- Optional custom services: Python FastAPI
 - Agent framework: LangChain 1.x for persona, memory, tools, and structured output
 - Agent discovery protocol: A2A Agent Card at `/.well-known/agent-card.json`, future/advanced unless needed by the deterministic MVP
 

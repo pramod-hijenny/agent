@@ -2,6 +2,7 @@ import { Link, useNavigate } from "@/lib/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { BrandMark } from "@/components/BrandMark";
 import {
   ArrowRight,
   BadgeCheck,
@@ -10,7 +11,6 @@ import {
   MessageCircle,
   Play,
   ShieldCheck,
-  Sparkles,
   Users,
 } from "lucide-react";
 import { useState } from "react";
@@ -26,9 +26,9 @@ const SOCIAL_IMAGES = [
 ];
 
 const PEOPLE = [
-  { name: "Maya", color: "bg-[#ff6f91]", x: "left-[7%] top-[16%]" },
+  { name: "Maya", color: "bg-[#f7b801] text-black", x: "left-[7%] top-[16%]" },
   { name: "Omar", color: "bg-[#ffd166]", x: "right-[18%] top-[9%]" },
-  { name: "Sofia", color: "bg-[#77ddff]", x: "right-[8%] bottom-[25%]" },
+  { name: "Sofia", color: "bg-black text-[#f7b801]", x: "right-[8%] bottom-[25%]" },
 ];
 
 export function AuthPage() {
@@ -122,27 +122,24 @@ export function AuthPage() {
         created_at: Date.now() - 1000 * 60 * 90,
       },
     ];
-    setAuth({ email: "demo@agentcircle.app" });
+    setAuth({ email: "demo@getmybee.app" });
     setUser(demoUser);
     setIntros(demoIntros);
     navigate({ to: "/app/home" });
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#eef4ff] text-black">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,#ffb6d5_0,transparent_28rem),radial-gradient(circle_at_90%_18%,#b8e5ff_0,transparent_32rem),linear-gradient(135deg,#f8fbff,#d9e8ff_48%,#f7eefc)]" />
-      <div className="absolute inset-0 opacity-[0.22] [background-image:linear-gradient(#1f2937_1px,transparent_1px),linear-gradient(90deg,#1f2937_1px,transparent_1px)] [background-size:54px_54px]" />
+    <div className="relative min-h-screen overflow-hidden bg-[#fffaf0] text-black">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgb(247_184_1_/_0.28)_0,transparent_28rem),radial-gradient(circle_at_90%_18%,rgb(17_17_17_/_0.1)_0,transparent_32rem),linear-gradient(135deg,#fffef8,#fff4c8_48%,#ffffff)]" />
+      <div className="honeycomb-bg absolute inset-0 opacity-55" />
 
       <header className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-5 py-5 md:px-8">
         <Link to="/" className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-black text-white shadow-xl">
-            <Sparkles className="h-5 w-5" />
-          </span>
-          <span className="text-xl font-black tracking-tight">AgentCircle</span>
+          <BrandMark />
         </Link>
         <Button
           asChild
-          className="hidden rounded-full bg-black px-5 text-white hover:bg-black/85 sm:inline-flex"
+          className="hidden rounded-full bg-[#111111] px-5 text-white hover:bg-[#111111]/85 sm:inline-flex"
         >
           <Link to="/">
             Explore <ArrowRight className="h-4 w-4" />
@@ -151,15 +148,16 @@ export function AuthPage() {
       </header>
 
       <main className="relative z-10 mx-auto grid min-h-[calc(100vh-84px)] max-w-7xl items-center gap-8 px-5 pb-10 md:px-8 lg:grid-cols-[minmax(0,1.05fr)_430px] xl:grid-cols-[minmax(0,1.15fr)_460px]">
-        <section className="relative min-h-[640px] overflow-hidden rounded-[2rem] bg-black text-white shadow-[0_32px_90px_rgb(38_52_78_/_0.28)] md:rounded-[3rem]">
+        <section className="relative min-h-[640px] overflow-hidden rounded-[2rem] bg-[#111111] text-white shadow-[0_32px_90px_rgb(17_17_17_/_0.28)] md:rounded-[3rem]">
           <img
             src={SOCIAL_IMAGES[0]}
             alt=""
-            className="absolute inset-0 h-full w-full object-cover opacity-70"
+            className="absolute inset-0 h-full w-full object-cover opacity-30 grayscale"
             loading="eager"
             referrerPolicy="no-referrer"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgb(0_0_0_/_0.74),rgb(0_0_0_/_0.24)_50%,rgb(0_0_0_/_0.58))]" />
+          <div className="absolute inset-0 bg-[linear-gradient(110deg,rgb(17_17_17_/_0.95),rgb(17_17_17_/_0.72)_54%,rgb(247_184_1_/_0.42))]" />
+          <div className="honeycomb-bg absolute inset-0 opacity-20 mix-blend-screen" />
           <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-black to-transparent" />
 
           {PEOPLE.map((person) => (
@@ -178,7 +176,7 @@ export function AuthPage() {
 
           <div className="relative flex min-h-[640px] flex-col justify-between p-6 md:p-9 lg:p-11">
             <div className="flex w-fit items-center gap-2 rounded-full border border-white/25 bg-white/15 px-4 py-2 text-sm font-black backdrop-blur-xl">
-              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#7df3c8]" />
+              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#f7b801]" />
               Live founder network
             </div>
 
@@ -187,14 +185,14 @@ export function AuthPage() {
                 Meet people like a social app.
               </h1>
               <p className="mt-5 max-w-xl text-lg font-semibold leading-8 text-white/78">
-                AgentCircle turns startup networking into a visual feed of profiles, stories, warm
+                Get My Bee turns startup networking into a visual feed of profiles, stories, warm
                 intros, reactions, and agent-assisted recommendations.
               </p>
               <div className="mt-7 flex flex-wrap items-center gap-3">
                 <button
                   type="button"
                   onClick={loginDemo}
-                  className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-black text-black shadow-xl transition hover:-translate-y-0.5"
+                  className="inline-flex items-center gap-2 rounded-full bg-[#f7b801] px-5 py-3 text-sm font-black text-black shadow-xl transition hover:-translate-y-0.5 hover:bg-[#ffd14a]"
                 >
                   Use demo account <Play className="h-4 w-4 fill-current" />
                 </button>
@@ -205,10 +203,10 @@ export function AuthPage() {
             </div>
           </div>
 
-          <div className="absolute right-5 top-24 hidden w-72 rounded-[1.7rem] border border-white/25 bg-white/18 p-4 shadow-2xl backdrop-blur-2xl xl:block">
+          <div className="absolute right-5 top-24 hidden w-72 rounded-[1.7rem] border border-[#f7b801]/50 bg-black/55 p-4 shadow-2xl backdrop-blur-2xl xl:block">
             <div className="flex items-center justify-between">
               <p className="font-black">Stories</p>
-              <Camera className="h-5 w-5 text-white/75" />
+              <Camera className="h-5 w-5 text-[#f7b801]" />
             </div>
             <div className="mt-4 grid grid-cols-3 gap-2">
               {SOCIAL_IMAGES.map((src, index) => (
@@ -220,7 +218,7 @@ export function AuthPage() {
                     loading="lazy"
                     referrerPolicy="no-referrer"
                   />
-                  <span className="-mt-8 ml-2 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[10px] font-black text-black">
+                  <span className="-mt-8 ml-2 flex h-6 w-6 items-center justify-center rounded-full bg-[#f7b801] text-[10px] font-black text-black">
                     {index + 1}
                   </span>
                 </div>
@@ -235,7 +233,7 @@ export function AuthPage() {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate font-black">Maya Chen</p>
-                <p className="truncate text-sm font-bold text-slate-400">Pre-seed founder</p>
+                <p className="truncate text-sm font-bold text-[#8a6a00]">Pre-seed founder</p>
               </div>
               <BadgeCheck className="h-5 w-5 text-[#4aa3ff]" />
             </div>
@@ -244,7 +242,7 @@ export function AuthPage() {
             </p>
             <div className="mt-4 flex items-center gap-4 text-sm font-black text-slate-500">
               <span className="inline-flex items-center gap-1.5">
-                <Heart className="h-4 w-4 fill-[#ff6f91] text-[#ff6f91]" /> 2.8k
+                <Heart className="h-4 w-4 fill-[#f7b801] text-[#111111]" /> 2.8k
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <MessageCircle className="h-4 w-4" /> 84
@@ -362,8 +360,8 @@ export function AuthPage() {
 
           <div className="mt-5 grid grid-cols-3 gap-2">
             {["Stories", "Matches", "Messages"].map((item) => (
-              <div key={item} className="rounded-2xl bg-slate-100 px-3 py-3 text-center">
-                <p className="text-xs font-black text-slate-400">{item}</p>
+              <div key={item} className="rounded-2xl bg-[#fff4c8] px-3 py-3 text-center">
+                <p className="text-xs font-black text-[#8a6a00]">{item}</p>
                 <p className="mt-1 text-lg font-black">
                   {item === "Stories" ? "24" : item === "Matches" ? "3" : "6"}
                 </p>
@@ -378,7 +376,7 @@ export function AuthPage() {
           >
             {mode === "signup"
               ? "Already have an account? Sign in"
-              : "New to AgentCircle? Create one"}
+              : "New to Get My Bee? Create one"}
           </button>
         </section>
       </main>

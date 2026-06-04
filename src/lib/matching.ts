@@ -210,5 +210,5 @@ export function summarize(me: Profile, other: Profile, match: ScoredMatch): Matc
 
 export function suggestIntroMessage(me: Profile, other: Profile, match: ScoredMatch): string {
   const topic = match.conversationTopics[0] || me.current_ask;
-  return `Hi ${other.full_name.split(" ")[0]}, AgentCircle suggested an intro because ${match.why}. I am currently looking for: ${me.current_ask} I thought a short conversation about "${topic}" could be useful for both of us. Open to a brief intro call?`;
+  return `Hi ${other.full_name.split(" ")[0]}, Get My Bee suggested an intro because ${match.why}. I am currently looking for: ${me.current_ask} I thought a short conversation about "${topic}" could be useful for both of us. Open to a brief intro call?`;
 }

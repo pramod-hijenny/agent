@@ -78,7 +78,7 @@ export function Onboarding() {
       company,
       role,
       stage,
-      bio: bio || "Building inside SF Builders Circle.",
+      bio: bio || "Building inside Builder Hive.",
       avatar_color: PALETTES[Math.floor(Math.random() * PALETTES.length)],
       interests: interests.length ? interests : ["AI", "Startups", "Product strategy"],
       skills: skills.length ? skills : ["Product", "Customer discovery"],
@@ -95,7 +95,7 @@ export function Onboarding() {
         agent_name: agent_name || `${(full_name || "Your").split(" ")[0]} Agent`,
         tone,
         agent_intro: agentPreview(full_name, tone, interests),
-        current_mission: "Find three useful people inside SF Builders Circle",
+        current_mission: "Find three useful people inside Builder Hive",
         status: "active",
         memory: buildMemory(likes, interests, goals),
       },
@@ -395,7 +395,7 @@ export function Onboarding() {
                   </p>
                 </div>
                 <Button type="button" variant="outline" className="rounded-xl">
-                  <Sparkles className="h-4 w-4" /> Generate My Agent
+                  <Sparkles className="h-4 w-4" /> Generate My Bee
                 </Button>
               </Step>
             )}
@@ -483,7 +483,7 @@ export function Onboarding() {
               </Button>
             ) : (
               <Button onClick={finish} className="rounded-full bg-black font-black text-white">
-                Enter AgentCircle <ArrowRight className="h-4 w-4" />
+                Enter Get My Bee <ArrowRight className="h-4 w-4" />
               </Button>
             )}
           </div>

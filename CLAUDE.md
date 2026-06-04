@@ -147,9 +147,10 @@ Live URL: `https://mep6b952.insforge.site`
 
 Also configured for Cloudflare Pages via `wrangler.jsonc` (serves `dist/` with SPA fallback). Don't edit `dist/` directly.
 
-### Backend (FastAPI)
+### Backend
 
-Deploy as a container to InsForge Compute (Fly.io) using the Dockerfile in `backend/`.
+The app uses InsForge for database, auth, storage, and backend tasks. The
+optional Python backend is not part of the default deploy path.
 
 ## Specs (`spec/`)
 

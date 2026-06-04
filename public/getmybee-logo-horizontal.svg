@@ -1,0 +1,41 @@
+<svg width="760" height="210" viewBox="0 0 760 210" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">GetMyBee logo</title>
+  <desc id="desc">A geometric black and honey yellow bee mark next to the GetMyBee wordmark.</desc>
+  <g filter="url(#logoShadow)">
+    <path d="M88 18H139L175 78H105L84 42L88 18Z" fill="url(#honey)" />
+    <path d="M70 100L167 83L192 143L162 184H77L42 126L70 100Z" fill="url(#honey)" />
+    <clipPath id="bodyClip">
+      <path d="M70 100L167 83L192 143L162 184H77L42 126L70 100Z" />
+    </clipPath>
+    <g clip-path="url(#bodyClip)">
+      <rect x="82" y="80" width="24" height="122" transform="rotate(-16 82 80)" fill="#151515" />
+      <rect x="134" y="71" width="27" height="126" transform="rotate(-16 134 71)" fill="#151515" />
+      <rect x="185" y="63" width="30" height="132" transform="rotate(-16 185 63)" fill="#151515" />
+      <rect x="30" y="108" width="78" height="96" fill="url(#honeyGlow)" opacity="0.35" />
+    </g>
+    <path d="M42 126L77 184L42 207L56 160L42 126Z" fill="#151515" />
+    <path d="M198 82H235L255 120L235 158H198L178 120L198 82Z" fill="url(#black)" />
+  </g>
+
+  <text x="292" y="112" fill="#151515" font-family="Arial Black, Arial, Helvetica, sans-serif" font-size="67" font-weight="900" letter-spacing="-1">
+    Get<tspan fill="#FDBA00">My</tspan>Bee
+  </text>
+
+  <defs>
+    <linearGradient id="honey" x1="58" y1="22" x2="176" y2="185" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD84A" />
+      <stop offset="1" stop-color="#F5A800" />
+    </linearGradient>
+    <linearGradient id="honeyGlow" x1="28" y1="98" x2="102" y2="192" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF0A3" />
+      <stop offset="1" stop-color="#F7B801" />
+    </linearGradient>
+    <linearGradient id="black" x1="188" y1="83" x2="250" y2="156" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#333333" />
+      <stop offset="1" stop-color="#050505" />
+    </linearGradient>
+    <filter id="logoShadow" x="21" y="2" width="254" height="225" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000000" flood-opacity="0.16" />
+    </filter>
+  </defs>
+</svg>

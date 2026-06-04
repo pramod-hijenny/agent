@@ -1,28 +1,46 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect, type ReactNode } from "react";
 import { AppLayout } from "@/components/AppLayout";
+import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import { RouteParamsProvider, RouterProvider, usePathname, navigate } from "@/lib/navigation";
 import { Toaster } from "@/components/ui/sonner";
-import { Landing } from "@/routes";
-import { AuthPage } from "@/routes/auth";
-import { Onboarding } from "@/routes/onboarding";
-import { Home } from "@/routes/app.home";
-import { Discover } from "@/routes/app.discover";
-import { AgentPage } from "@/routes/app.agent";
-import { InboxPage } from "@/routes/app.inbox";
-import { Connections } from "@/routes/app.connections";
-import { Settings } from "@/routes/app.settings";
-import { ProfilePage } from "@/routes/app.profile.$id";
+
+const Landing = lazy(() => import("@/routes").then((module) => ({ default: module.Landing })));
+const AuthPage = lazy(() =>
+  import("@/routes/auth").then((module) => ({ default: module.AuthPage })),
+);
+const Onboarding = lazy(() =>
+  import("@/routes/onboarding").then((module) => ({ default: module.Onboarding })),
+);
+const Home = lazy(() => import("@/routes/app.home").then((module) => ({ default: module.Home })));
+const Discover = lazy(() =>
+  import("@/routes/app.discover").then((module) => ({ default: module.Discover })),
+);
+const AgentPage = lazy(() =>
+  import("@/routes/app.agent").then((module) => ({ default: module.AgentPage })),
+);
+const InboxPage = lazy(() =>
+  import("@/routes/app.inbox").then((module) => ({ default: module.InboxPage })),
+);
+const Connections = lazy(() =>
+  import("@/routes/app.connections").then((module) => ({ default: module.Connections })),
+);
+const Settings = lazy(() =>
+  import("@/routes/app.settings").then((module) => ({ default: module.Settings })),
+);
+const ProfilePage = lazy(() =>
+  import("@/routes/app.profile.$id").then((module) => ({ default: module.ProfilePage })),
+);
 
 const TITLES: Record<string, string> = {
-  "/": "AgentCircle - AI networking for startup communities",
-  "/auth": "Sign in - AgentCircle",
-  "/onboarding": "Set up your agent - AgentCircle",
-  "/app/home": "Home - AgentCircle",
-  "/app/discover": "Discover - AgentCircle",
-  "/app/agent": "My Agent - AgentCircle",
-  "/app/inbox": "Inbox - AgentCircle",
-  "/app/connections": "Connections - AgentCircle",
-  "/app/settings": "Settings - AgentCircle",
+  "/": "Get My Bee - Warm intros for founder networks",
+  "/auth": "Sign in - Get My Bee",
+  "/onboarding": "Set up your bee - Get My Bee",
+  "/app/home": "Home - Get My Bee",
+  "/app/discover": "Discover - Get My Bee",
+  "/app/agent": "My Bee - Get My Bee",
+  "/app/inbox": "Inbox - Get My Bee",
+  "/app/connections": "Connections - Get My Bee",
+  "/app/settings": "Settings - Get My Bee",
 };
 
 export function App() {
@@ -39,15 +57,15 @@ function AppRoutes() {
 
   useEffect(() => {
     if (pathname.startsWith("/app/profile/")) {
-      document.title = "Profile - AgentCircle";
+      document.title = "Profile - Get My Bee";
       return;
     }
-    document.title = TITLES[pathname] ?? "AgentCircle";
+    document.title = TITLES[pathname] ?? "Get My Bee";
   }, [pathname]);
 
-  if (pathname === "/") return <Landing />;
-  if (pathname === "/auth") return <AuthPage />;
-  if (pathname === "/onboarding") return <Onboarding />;
+  if (pathname === "/") return withRouteBoundary(pathname, <Landing />);
+  if (pathname === "/auth") return withRouteBoundary(pathname, <AuthPage />);
+  if (pathname === "/onboarding") return withRouteBoundary(pathname, <Onboarding />);
 
   if (pathname === "/app") {
     navigate("/app/home", { replace: true });
@@ -59,10 +77,16 @@ function AppRoutes() {
   }
 
   if (pathname.startsWith("/app")) {
-    return <AppLayout>{renderAppRoute(pathname)}</AppLayout>;
+    return (
+      <AppErrorBoundary key={pathname}>
+        <Suspense fallback={<RouteLoading />}>
+          <AppLayout>{renderAppRoute(pathname)}</AppLayout>
+        </Suspense>
+      </AppErrorBoundary>
+    );
   }
 
-  return <NotFound />;
+  return withRouteBoundary(pathname, <NotFound />);
 }
 
 function renderAppRoute(pathname: string) {
@@ -83,6 +107,24 @@ function renderAppRoute(pathname: string) {
   }
 
   return <NotFound compact />;
+}
+
+function withRouteBoundary(pathname: string, children: ReactNode) {
+  return (
+    <AppErrorBoundary key={pathname}>
+      <Suspense fallback={<RouteLoading />}>{children}</Suspense>
+    </AppErrorBoundary>
+  );
+}
+
+function RouteLoading() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[var(--app-canvas)] px-4">
+      <div className="rounded-full bg-white/90 px-5 py-3 text-sm font-semibold text-slate-600 shadow-[var(--shadow-card)] backdrop-blur-xl">
+        Loading Get My Bee...
+      </div>
+    </div>
+  );
 }
 
 function NotFound({ compact = false }: { compact?: boolean }) {

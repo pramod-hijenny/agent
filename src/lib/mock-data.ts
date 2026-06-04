@@ -2,7 +2,7 @@ import type { Community, Profile } from "./types";
 
 export const DEMO_COMMUNITY: Community = {
   id: "00000000-0000-4000-8000-000000000001",
-  name: "SF Builders Circle",
+  name: "Builder Hive",
   type: "founder_community",
   city: "San Francisco",
   description:
@@ -48,7 +48,7 @@ export const SEED_PROFILES: Profile[] = [
       tone: "Warm",
       agent_intro:
         "I represent Maya, a pre-seed founder building AI onboarding tools for B2B SaaS teams.",
-      current_mission: "Find design partners and founder peers inside SF Builders Circle.",
+      current_mission: "Find design partners and founder peers inside Builder Hive.",
       status: "active",
       memory: [
         "Needs feedback from B2B SaaS teams with onboarding problems.",

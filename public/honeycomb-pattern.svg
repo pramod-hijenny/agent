@@ -1,0 +1,14 @@
+<svg width="180" height="156" viewBox="0 0 180 156" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g fill="#FDBA00" fill-opacity="0.035">
+    <path d="M45 4L87 28V76L45 100L3 76V28L45 4Z" />
+    <path d="M135 4L177 28V76L135 100L93 76V28L135 4Z" />
+    <path d="M90 80L132 104V152L90 176L48 152V104L90 80Z" />
+  </g>
+  <g fill="none" stroke="#151515" stroke-linejoin="round" stroke-opacity="0.14" stroke-width="1.35">
+    <path d="M45 4L87 28V76L45 100L3 76V28L45 4Z" />
+    <path d="M135 4L177 28V76L135 100L93 76V28L135 4Z" />
+    <path d="M90 80L132 104V152L90 176L48 152V104L90 80Z" />
+    <path d="M0 80L42 104V152L0 176L-42 152V104L0 80Z" />
+    <path d="M180 80L222 104V152L180 176L138 152V104L180 80Z" />
+  </g>
+</svg>

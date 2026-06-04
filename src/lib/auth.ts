@@ -40,7 +40,10 @@ export async function getInsforgeAccessToken() {
   };
   const token = client.tokenManager?.getAccessToken() ?? null;
   if (token) return token;
-  if (getAuth()?.email === "demo@agentcircle.app") return "demo-agentcircle-local";
+  const email = getAuth()?.email;
+  if (email === "demo@getmybee.app" || email === "demo@agentcircle.app") {
+    return "demo-agentcircle-local";
+  }
   if (import.meta.env.DEV) return "demo-agentcircle-local";
   return null;
 }

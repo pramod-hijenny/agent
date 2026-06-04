@@ -14,7 +14,8 @@ import {
   X,
 } from "lucide-react";
 import { GradientAvatar } from "./Avatar";
-import { setAuth, setIntros, setUser, useUser } from "@/lib/store";
+import { BeeGlyph, BrandMark } from "./BrandMark";
+import { setAuth, setIntros, setUser, useIntros, useUser } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
@@ -28,9 +29,9 @@ import {
 const NAV = [
   { to: "/app/home", label: "News Feed", icon: Home, badge: null },
   { to: "/app/discover", label: "Discover", icon: Compass, badge: null },
-  { to: "/app/inbox", label: "Messages", icon: Inbox, badge: "6" },
-  { to: "/app/connections", label: "Connections", icon: Users, badge: "3" },
-  { to: "/app/agent", label: "My Agent", icon: Sparkles, badge: null },
+  { to: "/app/inbox", label: "Messages", icon: Inbox, badge: "pendingIntros" },
+  { to: "/app/connections", label: "Connections", icon: Users, badge: null },
+  { to: "/app/agent", label: "My Bee", icon: Sparkles, badge: null },
   { to: "/app/profile/me", label: "Profile", icon: User, badge: null },
   { to: "/app/settings", label: "Settings", icon: Settings, badge: null },
 ] as const;
@@ -41,41 +42,49 @@ const MOBILE_NAV = NAV.filter((item) =>
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const user = useUser();
+  const intros = useIntros();
   const navigate = useNavigate();
   const pathname = usePathname();
-  const [hydrating, setHydrating] = useState(false);
+  const [authState, setAuthState] = useState<"checking" | "ready" | "error">(() =>
+    user ? "ready" : "checking",
+  );
+  const [authError, setAuthError] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pendingIntroCount = intros.filter((intro) => intro.status === "pending").length;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (user) return;
+    if (user) {
+      setAuthState("ready");
+      setAuthError("");
+      return;
+    }
     let cancelled = false;
-    setHydrating(true);
+    setAuthState("checking");
+    setAuthError("");
     getCurrentUser()
       .then(async (authUser) => {
         if (cancelled) return;
         if (!authUser) {
           navigate({ to: "/auth" });
-          setHydrating(false);
           return;
         }
         const profile = await fetchMyProfile();
         if (cancelled) return;
         if (!profile || !profile.full_name || !profile.current_ask) {
           navigate({ to: "/onboarding" });
-          setHydrating(false);
           return;
         }
         setUser(profile);
         fetchMyIntros()
           .then(setIntros)
           .catch(() => setIntros([]));
-        setHydrating(false);
+        setAuthState("ready");
       })
-      .catch(() => {
+      .catch((error) => {
         if (!cancelled) {
-          navigate({ to: "/auth" });
-          setHydrating(false);
+          setAuthError(error instanceof Error ? error.message : "Unable to load your workspace");
+          setAuthState("error");
         }
       });
     return () => {
@@ -87,10 +96,26 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     setMobileMenuOpen(false);
   }, [pathname]);
 
-  if (!user || hydrating) return null;
+  if (authState === "checking") return <AppLoadingScreen />;
+  if (authState === "error") {
+    return (
+      <AppLoadError
+        message={authError || "Unable to load your workspace"}
+        onRetry={() => window.location.reload()}
+      />
+    );
+  }
+  if (!user) return <AppLoadingScreen label="Redirecting..." />;
 
   function isActive(to: (typeof NAV)[number]["to"]) {
     return pathname === to || (to === "/app/profile/me" && pathname.startsWith("/app/profile"));
+  }
+
+  function badgeFor(item: (typeof NAV)[number]) {
+    if (item.badge === "pendingIntros") {
+      return pendingIntroCount > 0 ? String(pendingIntroCount) : null;
+    }
+    return null;
   }
 
   async function signOut() {
@@ -103,18 +128,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[var(--app-canvas)] text-foreground">
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_9%_14%,oklch(0.82_0.06_305_/_0.28),transparent_30rem),radial-gradient(circle_at_92%_8%,oklch(0.88_0.07_215_/_0.32),transparent_34rem),linear-gradient(135deg,oklch(0.68_0.035_288),oklch(0.94_0.025_220)_48%,oklch(0.77_0.045_250))]" />
+      <div className="honeycomb-bg pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_9%_14%,rgb(247_184_1_/_0.3),transparent_30rem),radial-gradient(circle_at_92%_8%,rgb(17_17_17_/_0.1),transparent_34rem),linear-gradient(135deg,#fffef8,#fff4c8_48%,#ffffff)]" />
       <div className="min-h-screen w-full xl:pl-[260px] 2xl:pl-[280px]">
         <aside className="fixed inset-y-0 left-0 z-30 hidden w-[260px] overflow-y-auto border-r border-sidebar-border bg-sidebar px-5 py-5 xl:flex xl:flex-col 2xl:w-[280px] 2xl:px-6">
           <Link to="/app/home" className="group flex items-center gap-3">
-            <span className="relative flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#eaf2ff]">
-              <span className="absolute h-7 w-7 rounded-full bg-[#83d9c4] blur-md transition-transform group-hover:scale-125" />
-              <Sparkles className="relative h-5 w-5 text-[#0f172a]" />
-            </span>
-            <span>
-              <span className="block text-base font-bold tracking-tight">AgentCircle</span>
-              <span className="text-xs font-semibold text-slate-400">SF Builders</span>
-            </span>
+            <BrandMark glyphClassName="h-10" />
           </Link>
 
           <div className="mt-7 flex items-center gap-3">
@@ -133,15 +151,17 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <nav className="mt-7 space-y-1.5">
             {NAV.map((n) => {
               const active = isActive(n.to);
+              const badge = badgeFor(n);
               return (
                 <Link
                   key={n.to}
                   to={n.to}
+                  aria-current={active ? "page" : undefined}
                   className={cn(
                     "group flex h-11 items-center gap-3 rounded-[0.9rem] px-4 text-[13px] font-semibold transition-all",
                     active
-                      ? "bg-black text-white shadow-[0_10px_22px_oklch(0_0_0_/_0.16)]"
-                      : "text-slate-900 hover:bg-slate-100",
+                      ? "bg-black text-[#f7b801] shadow-[0_10px_22px_oklch(0_0_0_/_0.16)]"
+                      : "text-slate-900 hover:bg-[#fff4c8]",
                   )}
                 >
                   <n.icon
@@ -151,14 +171,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     )}
                   />
                   <span className="min-w-0 flex-1 truncate">{n.label}</span>
-                  {n.badge && (
+                  {badge && (
                     <span
                       className={cn(
                         "flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-[11px]",
                         active ? "bg-white text-black" : "bg-black text-white",
                       )}
                     >
-                      {n.badge}
+                      {badge}
                     </span>
                   )}
                 </Link>
@@ -167,12 +187,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="mt-auto rounded-[1rem] border border-[#d8e2f5] bg-white p-4 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[0.9rem] bg-[linear-gradient(135deg,#b381ff,#6ee7c9,#f8d06a)] text-white shadow-lg">
-              <Sparkles className="h-6 w-6" />
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[0.9rem] bg-[#fff4c8] text-white shadow-lg">
+              <BeeGlyph className="h-8 w-10" />
             </div>
-            <p className="mt-3 text-sm font-semibold">Agent is online</p>
+            <p className="mt-3 text-sm font-semibold">Bee is online</p>
             <p className="mt-1 text-xs font-semibold leading-5 text-slate-400">
-              Approval-gated intros are ready.
+              {pendingIntroCount > 0
+                ? `${pendingIntroCount} intro${pendingIntroCount === 1 ? "" : "s"} need review.`
+                : "Approval-gated intros are ready."}
             </p>
           </div>
           <Button
@@ -189,10 +211,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <header className="sticky top-3 z-30 mx-3 mt-3 rounded-[1.5rem] border border-white/80 bg-white/90 px-3 py-3 shadow-[0_14px_40px_oklch(0.37_0.04_250_/_0.12)] backdrop-blur-xl xl:hidden">
             <div className="flex items-center gap-2">
               <Link to="/app/home" className="flex items-center gap-2 rounded-full pr-1">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-black text-white">
-                  <Sparkles className="h-4 w-4" />
-                </span>
-                <span className="text-lg font-bold tracking-tight">AgentCircle</span>
+                <BrandMark glyphClassName="h-9" />
               </Link>
               <div className="ml-auto flex items-center gap-1">
                 <Link
@@ -229,16 +248,23 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       <nav className="fixed bottom-3 left-3 right-3 z-30 grid grid-cols-5 rounded-[1.5rem] border border-white/80 bg-white/95 p-1 shadow-[0_20px_60px_oklch(0.25_0.04_260_/_0.22)] backdrop-blur-xl xl:hidden">
         {MOBILE_NAV.map((n) => {
           const active = isActive(n.to);
+          const badge = badgeFor(n);
           return (
             <Link
               key={n.to}
               to={n.to}
+              aria-current={active ? "page" : undefined}
               className={cn(
-                "flex flex-col items-center gap-1 rounded-[1.15rem] py-2 text-[10px] font-semibold",
+                "relative flex flex-col items-center gap-1 rounded-[1.15rem] py-2 text-[10px] font-semibold",
                 active ? "bg-black text-white" : "text-slate-500",
               )}
             >
               <n.icon className="h-5 w-5" /> {mobileLabel(n.to)}
+              {badge && (
+                <span className="absolute right-3 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#f7b801] px-1 text-[9px] font-bold text-black">
+                  {badge}
+                </span>
+              )}
             </Link>
           );
         })}
@@ -255,12 +281,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-[0.9rem] bg-black text-white">
-                  <Sparkles className="h-5 w-5" />
+                <span className="flex h-10 w-10 items-center justify-center rounded-[0.9rem] bg-[#fff4c8] text-white">
+                  <BeeGlyph className="h-7 w-9" />
                 </span>
                 <div>
-                  <p className="text-sm font-bold">AgentCircle</p>
-                  <p className="text-xs font-semibold text-slate-400">SF Builders</p>
+                  <p className="text-sm font-bold">Get My Bee</p>
+                  <p className="text-xs font-semibold text-[#8a6a00]">Builder Hive</p>
                 </div>
               </div>
               <button
@@ -285,10 +311,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <nav className="mt-5 space-y-1.5">
               {NAV.map((n) => {
                 const active = isActive(n.to);
+                const badge = badgeFor(n);
                 return (
                   <Link
                     key={n.to}
                     to={n.to}
+                    aria-current={active ? "page" : undefined}
                     className={cn(
                       "flex h-11 items-center gap-3 rounded-[0.9rem] px-4 text-sm font-semibold",
                       active ? "bg-black text-white" : "text-slate-700 hover:bg-slate-100",
@@ -296,14 +324,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   >
                     <n.icon className="h-4 w-4" />
                     <span className="min-w-0 flex-1 truncate">{n.label}</span>
-                    {n.badge && (
+                    {badge && (
                       <span
                         className={cn(
                           "flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-[11px]",
                           active ? "bg-white text-black" : "bg-black text-white",
                         )}
                       >
-                        {n.badge}
+                        {badge}
                       </span>
                     )}
                   </Link>
@@ -326,10 +354,43 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
+function AppLoadingScreen({ label = "Loading workspace..." }: { label?: string }) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[var(--app-canvas)] px-4 text-foreground">
+      <section className="w-full max-w-sm rounded-[1.25rem] border border-white/80 bg-white/95 p-6 text-center shadow-[var(--shadow-card)] backdrop-blur-xl">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[1rem] bg-black text-white shadow-lg">
+          <BeeGlyph className="h-8 w-10 animate-pulse" />
+        </div>
+        <p className="mt-4 text-base font-bold text-black">{label}</p>
+        <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">
+          Syncing your profile, bee, and pending approvals.
+        </p>
+      </section>
+    </div>
+  );
+}
+
+function AppLoadError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[var(--app-canvas)] px-4 text-foreground">
+      <section className="w-full max-w-md rounded-[1.25rem] border border-white/80 bg-white/95 p-6 text-center shadow-[var(--shadow-card)] backdrop-blur-xl">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[1rem] bg-rose-50 text-rose-600">
+          <X className="h-6 w-6" />
+        </div>
+        <h1 className="mt-4 text-2xl font-bold text-black">Couldn’t load Get My Bee</h1>
+        <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">{message}</p>
+        <Button onClick={onRetry} className="mt-5 rounded-full bg-black font-semibold">
+          Try again
+        </Button>
+      </section>
+    </div>
+  );
+}
+
 function mobileLabel(to: (typeof NAV)[number]["to"]) {
   if (to === "/app/home") return "News";
   if (to === "/app/inbox") return "Inbox";
-  if (to === "/app/agent") return "Agent";
+  if (to === "/app/agent") return "Bee";
   if (to === "/app/profile/me") return "Profile";
   return "Discover";
 }

@@ -67,7 +67,7 @@ export function AgentPage() {
             <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur">
               <Bot className="h-4 w-4" /> AI representative
             </span>
-            <h1 className="mt-3 text-2xl font-bold tracking-tight md:text-3xl">My Agent</h1>
+            <h1 className="mt-3 text-2xl font-bold tracking-tight md:text-3xl">My Bee</h1>
             <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-white/70">
               Configure the social agent that talks to other agents, remembers context, and drafts
               intros for your approval.
@@ -181,7 +181,7 @@ export function AgentPage() {
           </div>
         </Panel>
 
-        <Panel title="Test my agent">
+        <Panel title="Test my bee">
           <div className="space-y-2 max-h-72 overflow-y-auto">
             {chat.length === 0 && (
               <p className="text-sm text-muted-foreground">

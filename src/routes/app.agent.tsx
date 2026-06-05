@@ -6,18 +6,47 @@ import { ActivityTimeline } from "@/components/ActivityTimeline";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AiBadge } from "@/components/AiBadge";
-import { Bot, Loader2, Pause, Play, Send, Plus, Trash2, Zap } from "lucide-react";
-import { testAgent } from "@/lib/api";
+import {
+  Bot,
+  Check,
+  Loader2,
+  Pause,
+  Play,
+  Plus,
+  Send,
+  ShieldAlert,
+  ShieldCheck,
+  Trash2,
+  X,
+  Zap,
+} from "lucide-react";
+import { agentsUpsert, testAgent } from "@/lib/api";
 import { getInsforgeAccessToken } from "@/lib/auth";
+import {
+  RULE_META,
+  clearScreenLog,
+  evaluateMessage,
+  getMyRules,
+  getScreenLog,
+  politeDecline,
+  saveMyRules,
+  type AgentRules,
+  type RuleKey,
+  type ScreenLogEntry,
+} from "@/lib/agent-rules";
+import type { Profile } from "@/lib/types";
+import { toast } from "sonner";
 
 export function AgentPage() {
   const user = useUser();
   const [newMem, setNewMem] = useState("");
+  const [saving, setSaving] = useState(false);
   const [chat, setChat] = useState<{ from: "user" | "agent"; text: string }[]>([]);
   const [input, setInput] = useState("");
   const [agentLoading, setAgentLoading] = useState(false);
   if (!user) return null;
 
+  // Send a sample message to the user's bee and show how it would respond.
   async function sendTest() {
     if (!input.trim() || !user) return;
     const q = input;
@@ -26,13 +55,10 @@ export function AgentPage() {
     setAgentLoading(true);
     try {
       const token = await getInsforgeAccessToken();
-      if (!token) throw new Error("Sign in again so your agent can use your session.");
+      if (!token) throw new Error("Sign in again so your bee can use your session.");
       const result = await testAgent(token, {
         message: q,
-        state: {
-          profile: user,
-          permissions: user.permissions,
-        },
+        state: { profile: user, permissions: user.permissions },
       });
       const suffix =
         result.source === "llm" ? "" : result.error ? `\n\nBackend note: ${result.error}` : "";
@@ -47,6 +73,33 @@ export function AgentPage() {
       ]);
     } finally {
       setAgentLoading(false);
+    }
+  }
+
+  // Persist the agent config to the backend registry (agents table + embedding).
+  async function saveAgent() {
+    if (!user) return;
+    setSaving(true);
+    try {
+      const token = await getInsforgeAccessToken();
+      if (!token) throw new Error("Sign in again to save your bee.");
+      await agentsUpsert(token, {
+        name: user.agent.agent_name,
+        persona_tone: user.agent.tone,
+        agent_intro: user.agent.agent_intro,
+        mission: user.agent.current_mission,
+        goals: user.goals,
+        interests: user.interests,
+        skills: user.skills,
+        intent: user.current_ask,
+        memory: user.agent.memory,
+        agent_mode_enabled: user.agent.status === "active",
+      });
+      toast.success("Your bee is saved to the registry");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not save your bee");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -73,12 +126,14 @@ export function AgentPage() {
               intros for your approval.
             </p>
           </div>
-          <div className="rounded-[1.15rem] border border-white/15 bg-white/12 p-4 backdrop-blur-xl">
-            <p className="text-2xl font-black text-[#f7b801]">
-              {user.agent.status === "active" ? "Live" : "Paused"}
-            </p>
-            <p className="text-sm font-semibold text-white/65">current status</p>
-          </div>
+          <Button
+            onClick={() => void saveAgent()}
+            disabled={saving}
+            className="rounded-[1rem] bg-[#f7b801] font-black text-black hover:bg-[#ffd14a]"
+          >
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}{" "}
+            Save my Bee
+          </Button>
         </div>
       </section>
       <AgentCard profile={user} />
@@ -181,8 +236,8 @@ export function AgentPage() {
           </div>
         </Panel>
 
-        <Panel title="Test my bee">
-          <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+        <Panel title="Test my Bee">
+          <div className="max-h-72 space-y-2 overflow-y-auto">
             {chat.length === 0 && (
               <p className="app-soft-panel rounded-[1rem] p-3 text-sm font-semibold text-[var(--app-muted)]">
                 Try: "Find three mentors who can review my onboarding flow"
@@ -194,10 +249,10 @@ export function AgentPage() {
                 className={m.from === "user" ? "flex justify-end" : "flex justify-start"}
               >
                 <div
-                  className={`max-w-[80%] rounded-[1.1rem] px-3 py-2 text-sm font-semibold leading-6 shadow-sm ${
+                  className={`max-w-[80%] whitespace-pre-wrap rounded-[1rem] px-3 py-2 text-sm font-semibold ${
                     m.from === "user"
-                      ? "bg-black text-white"
-                      : "border border-[#f7b801]/25 bg-[#fff4c8] text-black"
+                      ? "bg-black text-[#f7b801]"
+                      : "app-soft-panel text-[var(--app-ink-soft)]"
                   }`}
                 >
                   {m.from === "agent" && <AiBadge className="mb-1" label={user.agent.agent_name} />}
@@ -207,9 +262,9 @@ export function AgentPage() {
             ))}
             {agentLoading && (
               <div className="flex justify-start">
-                <div className="inline-flex items-center gap-2 rounded-[1.1rem] border border-[#f7b801]/25 bg-[#fff4c8] px-3 py-2 text-sm font-bold text-black">
+                <div className="app-soft-panel inline-flex items-center gap-2 rounded-[1rem] px-3 py-2 text-sm font-semibold text-[var(--app-ink-soft)]">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Bee is thinking...
+                  Your bee is thinking…
                 </div>
               </div>
             )}
@@ -219,13 +274,13 @@ export function AgentPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && void sendTest()}
-              placeholder="Ask your bee..."
+              placeholder="Ask your bee…"
               className="app-field rounded-[1rem] border-0 font-semibold shadow-none placeholder:text-[var(--app-placeholder)]"
             />
             <Button
               onClick={() => void sendTest()}
               disabled={agentLoading}
-              className="rounded-[1rem] bg-black text-[#f7b801] hover:bg-black/90"
+              className="rounded-[1rem] bg-black font-black text-[#f7b801] hover:bg-black/90"
             >
               <Send className="h-4 w-4" />
             </Button>
@@ -235,40 +290,261 @@ export function AgentPage() {
         <Panel title="Recent activity">
           <ActivityTimeline
             items={[
-              { icon: "search", title: "Agent searched San Francisco", time: "2 min ago" },
-              { icon: "agent", title: "Agent talked to Maya Agent", time: "10 min ago" },
+              { icon: "search", title: "Agent searched your community", time: "2 min ago" },
+              { icon: "agent", title: "Agent screened an inbound intro", time: "10 min ago" },
               { icon: "users", title: "Agent recommended 3 intros", time: "1 hr ago" },
               { icon: "check", title: "Agent needs approval on 2 intros", time: "Today" },
             ]}
           />
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              className="rounded-[1rem] border-[var(--app-border)] bg-white font-bold hover:bg-[#fff4c8]"
-              onClick={() =>
-                updateUser((u) => ({
-                  ...u,
-                  agent: { ...u.agent, status: u.agent.status === "active" ? "paused" : "active" },
-                }))
-              }
-            >
-              {user.agent.status === "active" ? (
-                <>
-                  <Pause className="h-4 w-4" /> Pause Agent
-                </>
-              ) : (
-                <>
-                  <Play className="h-4 w-4" /> Resume Agent
-                </>
-              )}
-            </Button>
-            <Button variant="secondary" className="rounded-[1rem] bg-[#fff4c8] font-bold">
-              New Mission
-            </Button>
-          </div>
         </Panel>
       </div>
+
+      <AgentMessageMode user={user} />
     </div>
+  );
+}
+
+interface InboxTestResult {
+  ok: boolean;
+  rule?: string;
+  reply: string;
+}
+
+function AgentMessageMode({ user }: { user: Profile }) {
+  const meId = user.user_id || user.id;
+  const on = user.agent.status === "active";
+  const [rules, setRules] = useState<AgentRules>(() => getMyRules(meId));
+  const [wl, setWl] = useState("");
+  const [test, setTest] = useState("");
+  const [result, setResult] = useState<InboxTestResult | null>(null);
+  const [log, setLog] = useState<ScreenLogEntry[]>(() => getScreenLog(meId));
+
+  function setRule(key: RuleKey, value: boolean) {
+    const next = { ...rules, [key]: value };
+    setRules(next);
+    saveMyRules(meId, next);
+  }
+
+  function addWhitelist() {
+    const name = wl.trim();
+    if (!name || rules.whitelist.some((w) => w.toLowerCase() === name.toLowerCase())) {
+      setWl("");
+      return;
+    }
+    const next = { ...rules, whitelist: [...rules.whitelist, name] };
+    setRules(next);
+    saveMyRules(meId, next);
+    setWl("");
+  }
+
+  function removeWhitelist(name: string) {
+    const next = { ...rules, whitelist: rules.whitelist.filter((w) => w !== name) };
+    setRules(next);
+    saveMyRules(meId, next);
+  }
+
+  function toggleMode() {
+    updateUser((u) => ({
+      ...u,
+      agent: { ...u.agent, status: u.agent.status === "active" ? "paused" : "active" },
+    }));
+  }
+
+  function runTest() {
+    const text = test.trim();
+    if (!text) return;
+    if (!on) {
+      setResult({
+        ok: true,
+        reply: "Agent Message Mode is off — this would be delivered directly.",
+      });
+      return;
+    }
+    const verdict = evaluateMessage(text, rules, { senderKnown: true });
+    if (verdict.decision === "pass") {
+      setResult({ ok: true, reply: "Passes your rules — this would land in your inbox." });
+    } else {
+      setResult({
+        ok: false,
+        rule: verdict.label,
+        reply: politeDecline(user.agent.tone, {
+          ownerFirst: user.full_name.split(" ")[0] || "your",
+          ruleLabel: verdict.label || "off-policy",
+        }),
+      });
+    }
+  }
+
+  function refreshLog() {
+    setLog(getScreenLog(meId));
+  }
+
+  return (
+    <section className="app-card rounded-[1.35rem] p-4 md:p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="flex items-center gap-2 text-lg font-black text-black">
+            <ShieldCheck className="h-5 w-5 text-[#ffb020]" /> Agent Message Mode
+          </h2>
+          <p className="mt-1 max-w-2xl text-sm font-semibold text-[var(--app-muted)]">
+            When on, your bee screens inbound DMs against the rules below and auto-declines
+            off-policy ones in your tone. Whitelisted people always get through.
+          </p>
+        </div>
+        <Button
+          onClick={toggleMode}
+          className={
+            on
+              ? "rounded-[1rem] bg-black font-black text-[#f7b801] hover:bg-black/90"
+              : "rounded-[1rem] border border-[var(--app-border)] bg-white font-black text-black hover:bg-[#fff4c8]"
+          }
+        >
+          {on ? (
+            <>
+              <Pause className="h-4 w-4" /> On — screening
+            </>
+          ) : (
+            <>
+              <Play className="h-4 w-4" /> Off — turn on
+            </>
+          )}
+        </Button>
+      </div>
+
+      <div className={`mt-4 grid gap-4 lg:grid-cols-2 ${on ? "" : "opacity-50"}`}>
+        {/* Rules */}
+        <div className="space-y-2">
+          <p className="text-sm font-black text-black">Rules</p>
+          {RULE_META.map((r) => (
+            <PermissionToggle
+              key={r.key}
+              label={r.label}
+              description={r.description}
+              checked={rules[r.key]}
+              onCheckedChange={(v) => setRule(r.key, v)}
+            />
+          ))}
+
+          <p className="pt-2 text-sm font-black text-black">Whitelist (always allowed)</p>
+          <div className="flex gap-2">
+            <Input
+              value={wl}
+              onChange={(e) => setWl(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addWhitelist()}
+              placeholder="Add a name…"
+              className="app-field rounded-[1rem] border-0 font-semibold shadow-none placeholder:text-[var(--app-placeholder)]"
+            />
+            <Button
+              onClick={addWhitelist}
+              className="rounded-[1rem] bg-black font-black text-[#f7b801] hover:bg-black/90"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {rules.whitelist.map((name) => (
+              <span
+                key={name}
+                className="inline-flex items-center gap-1 rounded-full bg-[#fff4c8] px-3 py-1 text-xs font-bold text-black"
+              >
+                {name}
+                <button onClick={() => removeWhitelist(name)} aria-label={`Remove ${name}`}>
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ))}
+            {rules.whitelist.length === 0 && (
+              <span className="text-xs font-semibold text-[var(--app-muted)]">No one yet.</span>
+            )}
+          </div>
+        </div>
+
+        {/* Test inbound */}
+        <div className="space-y-2">
+          <p className="text-sm font-black text-black">Test an inbound message</p>
+          <p className="text-xs font-semibold text-[var(--app-muted)]">
+            Paste something someone might send you and see how your bee handles it.
+          </p>
+          <textarea
+            value={test}
+            onChange={(e) => setTest(e.target.value)}
+            rows={3}
+            placeholder="e.g. Hey, buy now — limited offer! Text me at 555-123-4567"
+            className="app-field w-full resize-none rounded-[1rem] border-0 p-3 text-sm font-semibold shadow-none outline-none placeholder:text-[var(--app-placeholder)]"
+          />
+          <Button
+            onClick={runTest}
+            disabled={!test.trim()}
+            className="rounded-[1rem] bg-black font-black text-[#f7b801] hover:bg-black/90"
+          >
+            Run through my bee
+          </Button>
+          {result && (
+            <div
+              className={`rounded-[1rem] border p-3 text-sm font-semibold ${
+                result.ok
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                  : "border-amber-200 bg-amber-50 text-amber-800"
+              }`}
+            >
+              <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wide">
+                {result.ok ? (
+                  <>
+                    <ShieldCheck className="h-3.5 w-3.5" /> Delivered
+                  </>
+                ) : (
+                  <>
+                    <ShieldAlert className="h-3.5 w-3.5" /> Auto-declined · {result.rule}
+                  </>
+                )}
+              </p>
+              <p className="mt-1 leading-6">{result.reply}</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Transparency log */}
+      <div className="mt-5 border-t border-[var(--app-border)] pt-4">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-black text-black">Transparency log</p>
+          {log.length > 0 && (
+            <button
+              onClick={() => {
+                clearScreenLog(meId);
+                refreshLog();
+              }}
+              className="text-xs font-bold text-[var(--app-muted)] hover:text-black"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+        {log.length === 0 ? (
+          <p className="mt-2 text-xs font-semibold text-[var(--app-muted)]">
+            Nothing held yet. Messages your bee (or someone else's) holds will show here.
+          </p>
+        ) : (
+          <div className="mt-2 space-y-2">
+            {log.slice(0, 8).map((e) => (
+              <div key={e.id} className="app-soft-panel rounded-[1rem] p-3">
+                <p className="text-xs font-black text-black">
+                  {e.direction === "inbound"
+                    ? `Your bee held a message from ${e.other_name}`
+                    : `${e.other_name}'s bee held your message`}
+                  <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
+                    {e.rule_label}
+                  </span>
+                </p>
+                <p className="mt-1 truncate text-xs font-semibold text-[var(--app-muted)]">
+                  “{e.text}”
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 

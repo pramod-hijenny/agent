@@ -98,8 +98,7 @@ export async function uploadPostMedia(file: File): Promise<string> {
 
   if (error) throw new Error(error.message);
 
-  const { data } = insforge.storage.from("uploads").getPublicUrl(objectKey);
-  const publicUrl = data?.publicUrl;
+  const publicUrl = insforge.storage.from("uploads").getPublicUrl(objectKey);
   if (!publicUrl) throw new Error("Unable to create public media URL");
   return publicUrl;
 }
@@ -272,7 +271,7 @@ async function selectByPostIds(table: string, columns: string, postIds: string[]
     .select(columns)
     .in("post_id", postIds);
   if (error) throw new Error(error.message);
-  return (data ?? []) as Record<string, unknown>[];
+  return (data ?? []) as unknown as Record<string, unknown>[];
 }
 
 function applyInteractionSummary(post: AgentPost, summary?: PostInteractionSummary): AgentPost {
@@ -325,4 +324,9 @@ function dbRowToComment(row: Record<string, unknown>): AgentPostComment {
 
 function isDuplicateError(message: string) {
   return message.toLowerCase().includes("duplicate") || message.includes("23505");
+}
+
+// True for media URLs that point at a short video (used by the feed + Shorts view).
+export function isVideoUrl(url: string): boolean {
+  return /\.(mp4|webm|mov|m4v|ogg|ogv)(\?|#|$)/i.test(url);
 }

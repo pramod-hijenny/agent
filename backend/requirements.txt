@@ -1,0 +1,10 @@
+fastapi>=0.115
+uvicorn[standard]>=0.32
+httpx>=0.27
+pydantic>=2.9
+pydantic-settings>=2.5
+instructor>=1.6
+openai>=1.54
+# interview loop (M5). The OpenAI-only slim build — avoids pulling every provider
+# (incl. a broken mistralai that breaks instructor); we only use the Nebius/OpenAI provider.
+pydantic-ai-slim[openai]>=1.0

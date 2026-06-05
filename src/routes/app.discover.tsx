@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useUser, addIntro } from "@/lib/store";
+import { useEffect, useState } from "react";
+import { useUser } from "@/lib/store";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -10,14 +10,12 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Camera, Compass, MapPin, Search, ShieldCheck, Zap } from "lucide-react";
-import { scoreMatches, type ScoredMatch } from "@/lib/matching";
+import { type ScoredMatch } from "@/lib/matching";
 import { MatchCard } from "@/components/MatchCard";
 import { AgentConversationModal } from "@/components/AgentConversationModal";
-import { IntroApprovalModal } from "@/components/IntroApprovalModal";
 import type { Goal, Profile } from "@/lib/types";
 import { toast } from "sonner";
-import { DEMO_COMMUNITY } from "@/lib/mock-data";
-import { createIntroRequest, getInsforgeAccessToken } from "@/lib/auth";
+import { getInsforgeAccessToken } from "@/lib/auth";
 import { discover as discoverViaApi } from "@/lib/api";
 
 type BackendMatch = Awaited<ReturnType<typeof discoverViaApi>>[number];
@@ -32,88 +30,39 @@ export function Discover() {
   const [goal, setGoal] = useState<Goal | "any">("any");
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [convoMatch, setConvoMatch] = useState<ScoredMatch | null>(null);
-  const [introMatch, setIntroMatch] = useState<ScoredMatch | null>(null);
-  const [agentDraftMessage, setAgentDraftMessage] = useState("");
-  const [backendMatches, setBackendMatches] = useState<ScoredMatch[] | null>(null);
-  const [backendSearchActive, setBackendSearchActive] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [matches, setMatches] = useState<ScoredMatch[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const localMatches = useMemo(
-    () => (user ? scoreMatches(user, { city, goal, query, limit: 4 }) : []),
-    [user, city, goal, query],
-  );
-  const matches = backendMatches ?? localMatches;
-
-  if (!user) return null;
-
-  function resetBackendResults() {
-    setBackendMatches(null);
-    setBackendSearchActive(false);
-  }
-
-  async function findMatches() {
-    const nextQuery = draftQuery.trim();
-    const searchQuery = nextQuery || defaultQuery;
-    setQuery(searchQuery);
-    if (!nextQuery) setDraftQuery(defaultQuery);
+  async function runSearch(searchQuery: string) {
+    if (!user) return;
     setLoading(true);
     try {
       const token = await getInsforgeAccessToken();
-      if (!token) throw new Error("Sign in again to use ranked backend search.");
-      const results = await discoverViaApi(token, {
-        query: searchQuery,
-        city,
-        goal,
-        limit: 4,
-      });
-      setBackendMatches(results.map((item) => toScoredMatch(user, item, searchQuery)));
-      setBackendSearchActive(true);
-      toast.success("Backend ranked matches refreshed");
+      if (!token) throw new Error("Sign in again to search your community.");
+      const results = await discoverViaApi(token, { query: searchQuery, city, goal, limit: 6 });
+      setMatches(results.map((item) => toScoredMatch(user, item, searchQuery)));
     } catch (err) {
-      setBackendMatches(null);
-      setBackendSearchActive(false);
-      toast.error(err instanceof Error ? err.message : "Backend search failed");
+      setMatches([]);
+      toast.error(err instanceof Error ? err.message : "Discovery failed");
     } finally {
       setLoading(false);
     }
   }
 
-  async function sendIntro(message: string) {
-    if (!introMatch) return;
-    const toProfileId = introMatch.profile.id;
-    const firstName = introMatch.profile.full_name.split(" ")[0];
-    try {
-      const intro = await createIntroRequest({
-        to_profile_id: toProfileId,
-        message,
-        transcript: introMatch.conversationTopics
-          ? introMatch.conversationTopics.map((t) => ({ speaker: "user" as const, text: t }))
-          : undefined,
-        summary: {
-          match_strength:
-            introMatch.score >= 80 ? "Strong" : introMatch.score >= 65 ? "Good" : "Light",
-          best_connection_type: introMatch.why || "",
-          mutual_value: introMatch.profile.offering || "",
-          conversation_starter: introMatch.conversationTopics?.[0] || message,
-          suggested_activity: introMatch.profile.availability || "",
-        },
-      });
-      addIntro(intro);
-    } catch {
-      // Fallback to local only
-      const localIntro = {
-        id: crypto.randomUUID(),
-        from_user_id: user!.id,
-        to_user_id: toProfileId,
-        message,
-        status: "pending" as const,
-        created_at: Date.now(),
-      };
-      addIntro(localIntro);
-    }
-    setIntroMatch(null);
-    setAgentDraftMessage("");
-    toast.success(`Intro request sent to ${firstName}`);
+  // Load ranked matches on first open.
+  useEffect(() => {
+    void runSearch(query);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  if (!user) return null;
+  const currentUser = user;
+
+  async function findMatches() {
+    const nextQuery = draftQuery.trim() || defaultQuery;
+    setQuery(nextQuery);
+    if (!draftQuery.trim()) setDraftQuery(defaultQuery);
+    await runSearch(nextQuery);
   }
 
   return (
@@ -131,14 +80,14 @@ export function Discover() {
         <div className="relative grid gap-4 lg:grid-cols-[1fr_270px]">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full border border-[#f7b801]/35 bg-[#f7b801]/15 px-3 py-1.5 text-xs font-black text-[#ffd766] backdrop-blur">
-              <Compass className="h-4 w-4" /> Discover inside {DEMO_COMMUNITY.name}
+              <Compass className="h-4 w-4" /> Discover your community
             </span>
             <h1 className="mt-3 max-w-3xl text-3xl font-black leading-tight tracking-tight md:text-4xl">
               Find people worth meeting this week.
             </h1>
             <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-white/70">
-              Search by ask, role, city, and goal. Your agent ranks people by mutual value and
-              drafts intros you can approve.
+              Search by ask, city, and goal. Your agent ranks people by mutual value and drafts
+              intros you can approve.
             </p>
           </div>
           <div className="rounded-[1.15rem] border border-white/15 bg-white/12 p-4 backdrop-blur-xl">
@@ -150,9 +99,7 @@ export function Discover() {
                 <p className="text-2xl font-black text-[#f7b801]">
                   {loading ? "..." : matches.length}
                 </p>
-                <p className="text-sm font-semibold text-white/65">
-                  {backendSearchActive ? "backend matches" : "ranked matches"}
-                </p>
+                <p className="text-sm font-semibold text-white/65">ranked matches</p>
               </div>
             </div>
             <div className="mt-4 flex items-center gap-2 rounded-full bg-white/15 px-3 py-2 text-xs font-semibold">
@@ -169,7 +116,7 @@ export function Discover() {
             <p className="text-sm font-semibold text-[var(--app-muted)]">Matching brief</p>
           </div>
           <span className="rounded-full border border-[#f7b801]/25 bg-[#fff4c8] px-3 py-1 text-xs font-black text-black">
-            {backendSearchActive ? "Backend search" : "Ranked search"}
+            Agent-ranked
           </span>
         </div>
         <div className="app-field flex items-start gap-3 rounded-[1.15rem] p-3">
@@ -179,10 +126,7 @@ export function Discover() {
           <textarea
             aria-label="Search request"
             value={draftQuery}
-            onChange={(e) => {
-              resetBackendResults();
-              setDraftQuery(e.target.value);
-            }}
+            onChange={(e) => setDraftQuery(e.target.value)}
             rows={2}
             className="min-h-16 flex-1 resize-none bg-transparent p-1 text-[15px] font-semibold leading-6 text-black outline-none placeholder:text-[var(--app-placeholder)]"
             placeholder="Describe who you want to meet"
@@ -194,21 +138,12 @@ export function Discover() {
             <Input
               aria-label="City"
               value={city}
-              onChange={(e) => {
-                resetBackendResults();
-                setCity(e.target.value);
-              }}
+              onChange={(e) => setCity(e.target.value)}
               className="h-auto border-0 bg-transparent p-0 font-bold shadow-none focus-visible:ring-0"
             />
           </label>
           <div className="min-w-52">
-            <Select
-              value={goal}
-              onValueChange={(v) => {
-                resetBackendResults();
-                setGoal(v as Goal | "any");
-              }}
-            >
+            <Select value={goal} onValueChange={(v) => setGoal(v as Goal | "any")}>
               <SelectTrigger className="app-field rounded-full border-0 font-bold shadow-none">
                 <SelectValue />
               </SelectTrigger>
@@ -225,13 +160,7 @@ export function Discover() {
             </Select>
           </div>
           <div className="app-field flex items-center gap-3 rounded-full px-4 py-2">
-            <Switch
-              checked={verifiedOnly}
-              onCheckedChange={(value) => {
-                resetBackendResults();
-                setVerifiedOnly(value);
-              }}
-            />
+            <Switch checked={verifiedOnly} onCheckedChange={setVerifiedOnly} />
             <span className="text-sm font-bold text-black">Verified only</span>
           </div>
           <button
@@ -253,16 +182,19 @@ export function Discover() {
         </span>
       </div>
 
+      {!loading && matches.length === 0 && (
+        <div className="app-card rounded-[1.35rem] p-6 text-center text-sm font-semibold text-[var(--app-muted)]">
+          No matches yet. As more members set up their bee, they'll show up here.
+        </div>
+      )}
+
       <div className="grid gap-4 md:grid-cols-2">
         {matches.map((m) => (
           <MatchCard
             key={m.profile.id}
             match={m}
             onAskAgents={() => setConvoMatch(m)}
-            onRequestIntro={() => {
-              setAgentDraftMessage("");
-              setIntroMatch(m);
-            }}
+            onRequestIntro={() => setConvoMatch(m)}
           />
         ))}
       </div>
@@ -270,25 +202,14 @@ export function Discover() {
       <AgentConversationModal
         open={!!convoMatch}
         onOpenChange={(v) => !v && setConvoMatch(null)}
-        me={user}
+        me={currentUser}
         match={convoMatch}
         query={query}
-        onApprove={(draftMessage) => {
-          if (convoMatch) {
-            setAgentDraftMessage(draftMessage || "");
-            setIntroMatch(convoMatch);
-            setConvoMatch(null);
-          }
+        onApprove={() => {
+          toast.success("Intro sent for the recipient's agent to screen.");
+          setConvoMatch(null);
         }}
         onReject={() => setConvoMatch(null)}
-      />
-      <IntroApprovalModal
-        open={!!introMatch}
-        onOpenChange={(v) => !v && setIntroMatch(null)}
-        me={user}
-        match={introMatch}
-        initialMessage={agentDraftMessage}
-        onSend={sendIntro}
       />
     </div>
   );
@@ -315,7 +236,7 @@ function toScoredMatch(me: Profile, item: BackendMatch, query: string): ScoredMa
     sharedInterests,
     complementarySkills,
     sharedGoals,
-    why: item.reasons.join(" · ") || "Backend ranked this as a useful community match",
+    why: item.reasons.join(" · ") || "Agent-ranked as a useful community match",
     conversationTopics,
   };
 }

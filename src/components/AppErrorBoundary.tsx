@@ -35,6 +35,11 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
           <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
             This screen hit an unexpected error. Refreshing usually restores the current session.
           </p>
+          <pre className="mt-4 max-h-64 overflow-auto whitespace-pre-wrap rounded-xl bg-slate-900 p-3 text-left text-xs font-mono text-rose-200">
+            {this.state.error.message}
+            {"\n\n"}
+            {this.state.error.stack}
+          </pre>
           <button
             type="button"
             onClick={() => window.location.reload()}

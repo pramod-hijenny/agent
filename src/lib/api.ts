@@ -1,192 +1,215 @@
-import type { AgentPersona, Community, IntroRequest, Permissions, Profile } from "@/lib/types";
+import type { Profile } from "@/lib/types";
+import { DEFAULT_PERMISSIONS } from "@/lib/types";
 
-const API_URL = import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "";
+// Calls the Python FastAPI agent backend (the four pillars + interview).
+// The InsForge user JWT is forwarded as a Bearer token; the backend verifies it
+// via /api/auth/sessions/current. Set VITE_API_URL to the backend origin.
+const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "") || "";
 
-interface TokenResponse {
-  access_token: string;
+async function apiFetch<T>(
+  path: string,
+  token: string | null,
+  body?: unknown,
+  method = "POST",
+): Promise<T> {
+  if (!API_URL) throw new Error("VITE_API_URL is not configured");
+  const res = await fetch(`${API_URL}${path}`, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (!res.ok) {
+    let detail = `Request failed (${res.status})`;
+    try {
+      const j = await res.json();
+      if (j && (j.detail || j.message)) detail = j.detail || j.message;
+    } catch {
+      /* keep default */
+    }
+    throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+  }
+  return (await res.json()) as T;
 }
 
-type ApiIntro = Omit<IntroRequest, "created_at"> & { created_at: string };
-
-export interface AgentRun {
-  id: string;
-  workflow: string;
-  status: "queued" | "waiting_for_approval" | "completed" | "failed";
-  thread_id: string;
-  input: Record<string, unknown>;
-  output: AgentRunOutput;
-  error: string;
-  created_at: string;
-  updated_at: string;
+// ─── Registry (Pillar 1) ─────────────────────────────────────────
+export function agentsUpsert(
+  token: string,
+  payload: {
+    name: string;
+    persona_tone?: string;
+    agent_intro?: string;
+    mission?: string;
+    goals?: string[];
+    interests?: string[];
+    skills?: string[];
+    intent?: string;
+    memory?: string[];
+    agent_mode_enabled?: boolean;
+  },
+) {
+  return apiFetch<{ agent: { id: string } | null; reembedded: boolean; embed_error?: string }>(
+    "/agents",
+    token,
+    payload,
+  );
 }
 
-export interface AgentRunOutput {
-  draft_message?: string;
-  draft_source?: "llm" | "fallback" | "disabled" | "none" | string;
-  llm_error?: string;
-  logs?: string[];
-  matches?: Array<{
-    profile: Profile;
-    score: number;
-    reasons: string[];
-  }>;
-  __interrupt__?: Array<{
-    action: string;
-    draft_message?: string;
-    matches?: unknown[];
-  }>;
-}
-
+// ─── Test my bee ─────────────────────────────────────────────────
+// One-shot "test my agent" reply: send a sample message + the user's profile
+// state, get back how their bee would respond (LLM, or a template fallback).
 export interface AgentTestReply {
   reply: string;
   source: string;
   error: string;
 }
 
-async function request<T>(
-  path: string,
-  options: RequestInit & { token?: string } = {},
-): Promise<T> {
-  if (!API_URL) throw new Error("API URL is not configured");
-  const { token, headers, ...rest } = options;
-  const res = await fetch(`${API_URL}${path}`, {
-    ...rest,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...headers,
+export function testAgent(
+  token: string,
+  payload: { message: string; state: Record<string, unknown> },
+) {
+  return apiFetch<AgentTestReply>("/agents/test", token, payload);
+}
+
+// ─── Discovery (Pillar 2) ────────────────────────────────────────
+// The backend returns agent registry rows (with embedded profile fields). Adapt
+// each to the Profile shape the match cards already consume. NOTE: `profile.id`
+// here is the AGENT id — used as `to_agent_id` when requesting an intro.
+export interface DiscoveryAgent {
+  id: string;
+  user_id?: string;
+  name?: string;
+  persona_tone?: string;
+  mission?: string;
+  interests?: string[];
+  goals?: string[];
+  skills?: string[];
+  intent?: string;
+  city?: string;
+  full_name?: string;
+  avatar_color?: string;
+  role?: string;
+  company?: string;
+}
+
+function agentToProfile(a: DiscoveryAgent): Profile {
+  return {
+    id: a.id,
+    user_id: a.user_id,
+    community_id: "demo",
+    full_name: a.full_name || a.name || "Member",
+    city: a.city || "",
+    profession: "",
+    company: a.company || "",
+    role: (a.role as Profile["role"]) || "Founder",
+    stage: "",
+    bio: a.mission || "",
+    avatar_color: a.avatar_color || "from-sky-400 to-indigo-400",
+    interests: a.interests || [],
+    skills: a.skills || [],
+    goals: (a.goals || []) as Profile["goals"],
+    current_ask: a.intent || "",
+    offering: "",
+    availability: "",
+    likes: "",
+    dislikes: "",
+    topics_enjoy: "",
+    topics_avoid: "",
+    agent: {
+      agent_name: a.name || "",
+      tone: (a.persona_tone as Profile["agent"]["tone"]) || "Friendly",
+      agent_intro: "",
+      current_mission: a.mission || "",
+      status: "active",
+      memory: [],
     },
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.detail || `Request failed with ${res.status}`);
-  }
-  return res.json() as Promise<T>;
-}
-
-export async function devLogin(email: string) {
-  const token = await request<TokenResponse>("/auth/dev-login", {
-    method: "POST",
-    body: JSON.stringify({ email }),
-  });
-  return token.access_token;
-}
-
-export function getMe(token: string) {
-  return request<Profile>("/me", { token });
-}
-
-export function listCommunities(token: string) {
-  return request<Community[]>("/communities", { token });
-}
-
-export function submitOnboarding(token: string, profile: Profile): Promise<Profile> {
-  const { agent, permissions, ...profilePayload } = profile;
-  return request<Profile>("/me/onboarding", {
-    token,
-    method: "POST",
-    body: JSON.stringify({
-      profile: profilePayload,
-      agent,
-      permissions,
-    }),
-  });
-}
-
-export function updateAgent(token: string, agent: Partial<AgentPersona>) {
-  return request<Profile>("/me/agent", {
-    token,
-    method: "PATCH",
-    body: JSON.stringify(agent),
-  });
-}
-
-export function updatePermissions(token: string, permissions: Partial<Permissions>) {
-  return request<Profile>("/me/permissions", {
-    token,
-    method: "PATCH",
-    body: JSON.stringify(permissions),
-  });
+    permissions: { ...DEFAULT_PERMISSIONS },
+  };
 }
 
 export function discover(
   token: string,
   payload: { query: string; city?: string; goal?: string; limit?: number },
 ) {
-  return request<
-    Array<{
-      profile: Profile;
-      score: number;
-      reasons: string[];
-      suggested_activity: string;
-    }>
-  >("/discover", {
-    token,
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+  return apiFetch<
+    Array<{ agent: DiscoveryAgent; score: number; reasons: string[]; similarity: number | null }>
+  >("/discovery", token, {
+    need: payload.query || undefined,
+    filters: { city: payload.city || undefined, goal: payload.goal || undefined },
+    limit: payload.limit ?? 6,
+  }).then((rows) =>
+    rows.map((r) => ({
+      profile: agentToProfile(r.agent),
+      score: r.score,
+      reasons: r.reasons,
+      suggested_activity: r.agent.intent || "Start with a short intro chat",
+    })),
+  );
 }
 
-export function listIntros(token: string) {
-  return request<ApiIntro[]>("/intros", { token }).then((items) => items.map(fromApiIntro));
+// ─── Interaction + Trust (Pillars 3+4) ───────────────────────────
+export interface MessageRow {
+  id: string;
+  kind: string;
+  from_agent_id: string;
+  to_agent_id: string;
+  body: string;
+  state: "requested" | "screened" | "approved" | "delivered" | "declined";
+  decline_reason?: string;
+  context?: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
 }
 
-export function createIntro(
+export function messageCreate(
   token: string,
-  payload: Pick<IntroRequest, "to_user_id" | "message" | "transcript" | "summary">,
+  payload: {
+    to_agent_id: string;
+    kind?: "intro" | "dm";
+    body?: string;
+    context?: Record<string, unknown>;
+  },
 ) {
-  return request<ApiIntro>("/intros", {
+  return apiFetch<{ message: MessageRow; draft_source: string; needs_approval: boolean }>(
+    "/messages",
     token,
-    method: "POST",
-    body: JSON.stringify(payload),
-  }).then(fromApiIntro);
+    {
+      kind: "intro",
+      ...payload,
+    },
+  );
 }
 
-export function patchIntro(token: string, id: string, status: IntroRequest["status"]) {
-  return request<ApiIntro>(`/intros/${id}`, {
-    token,
-    method: "PATCH",
-    body: JSON.stringify({ status }),
-  }).then(fromApiIntro);
+export function messageApprove(token: string, messageId: string, edited_body?: string) {
+  return apiFetch<{
+    message_id: string;
+    outcome: "approved" | "declined";
+    reason: string;
+    screening: unknown;
+  }>(`/messages/${messageId}/approve`, token, { edited_body });
 }
 
-export function startAgentRun(
+export function messageDeliver(token: string, messageId: string) {
+  return apiFetch<{ message_id: string; state: string }>(
+    `/messages/${messageId}/deliver`,
+    token,
+    {},
+  );
+}
+
+// ─── Interview ───────────────────────────────────────────────────
+export function interviewRun(
   token: string,
-  payload: { thread_id: string; workflow?: string; state: Record<string, unknown> },
+  payload: { candidate_agent_id: string; topic?: string; max_questions?: number },
 ) {
-  return request<AgentRun>("/agents/runs", {
-    token,
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-}
-
-export function resumeAgentRun(
-  token: string,
-  threadId: string,
-  decision: { approved: boolean; edited_message?: string },
-) {
-  return request<AgentRun>(`/agents/runs/${threadId}/resume`, {
-    token,
-    method: "POST",
-    body: JSON.stringify({ decision }),
-  });
-}
-
-export function testAgent(
-  token: string,
-  payload: { message: string; state: Record<string, unknown> },
-) {
-  return request<AgentTestReply>("/agents/test", {
-    token,
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-}
-
-function fromApiIntro(intro: ApiIntro): IntroRequest {
-  return {
-    ...intro,
-    created_at: new Date(intro.created_at).getTime(),
-  };
+  return apiFetch<{
+    interview: {
+      id: string;
+      state: string;
+      transcript?: unknown;
+      scores?: Record<string, unknown>;
+    };
+  }>("/interviews", token, payload);
 }

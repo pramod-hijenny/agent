@@ -20,7 +20,8 @@ import { ALL_INTERESTS, ALL_SKILLS, DEFAULT_PERMISSIONS, GOAL_LABELS } from "@/l
 import type { AgentTone, Goal, Profile } from "@/lib/types";
 import { setUser } from "@/lib/store";
 import { DEMO_COMMUNITY } from "@/lib/mock-data";
-import { saveProfile } from "@/lib/auth";
+import { saveProfile, getInsforgeAccessToken } from "@/lib/auth";
+import { agentsUpsert } from "@/lib/api";
 import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 
 const TONES: AgentTone[] = ["Friendly", "Professional", "Direct", "Warm", "Curious"];
@@ -71,7 +72,7 @@ export function Onboarding() {
   async function finish() {
     const profile: Profile = {
       id: "me",
-      community_id: DEMO_COMMUNITY.id,
+      community_id: "demo",
       full_name: full_name || "You",
       city: city || "San Francisco",
       profession: profession || "Founder",
@@ -104,11 +105,26 @@ export function Onboarding() {
     try {
       const saved = await saveProfile(profile);
       setUser(saved);
+      // Create the backend agent registry row (+ embedding) so discovery works.
+      const token = await getInsforgeAccessToken();
+      if (token) {
+        await agentsUpsert(token, {
+          name: profile.agent.agent_name,
+          persona_tone: profile.agent.tone,
+          agent_intro: profile.agent.agent_intro,
+          mission: profile.agent.current_mission,
+          goals: profile.goals,
+          interests: profile.interests,
+          skills: profile.skills,
+          intent: profile.current_ask,
+          memory: profile.agent.memory,
+          agent_mode_enabled: true,
+        });
+      }
     } catch {
-      // Fallback: keep local demo mode usable even if not authenticated.
       setUser(profile);
     }
-    navigate({ to: "/app/home" });
+    navigate({ to: "/app/discover" });
   }
 
   return (

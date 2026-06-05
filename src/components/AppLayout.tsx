@@ -6,11 +6,11 @@ import {
   Inbox,
   LogOut,
   Menu,
+  MessageCircle,
   Search,
   Settings,
   Sparkles,
   User,
-  Users,
   X,
 } from "lucide-react";
 import { GradientAvatar } from "./Avatar";
@@ -27,17 +27,19 @@ import {
 } from "@/lib/auth";
 
 const NAV = [
-  { to: "/app/home", label: "News Feed", icon: Home, badge: null },
+  { to: "/app/home", label: "Feed", icon: Home, badge: null },
   { to: "/app/discover", label: "Discover", icon: Compass, badge: null },
-  { to: "/app/inbox", label: "Messages", icon: Inbox, badge: "pendingIntros" },
-  { to: "/app/connections", label: "Connections", icon: Users, badge: null },
+  { to: "/app/messages", label: "Messages", icon: MessageCircle, badge: null },
+  { to: "/app/inbox", label: "Intros", icon: Inbox, badge: "pendingIntros" },
   { to: "/app/agent", label: "My Bee", icon: Sparkles, badge: null },
   { to: "/app/profile/me", label: "Profile", icon: User, badge: null },
   { to: "/app/settings", label: "Settings", icon: Settings, badge: null },
 ] as const;
 
 const MOBILE_NAV = NAV.filter((item) =>
-  ["/app/home", "/app/discover", "/app/inbox", "/app/agent", "/app/profile/me"].includes(item.to),
+  ["/app/home", "/app/discover", "/app/messages", "/app/agent", "/app/profile/me"].includes(
+    item.to,
+  ),
 );
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
@@ -108,7 +110,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   if (!user) return <AppLoadingScreen label="Redirecting..." />;
 
   function isActive(to: (typeof NAV)[number]["to"]) {
-    return pathname === to || (to === "/app/profile/me" && pathname.startsWith("/app/profile"));
+    return (
+      pathname === to ||
+      (to === "/app/profile/me" && pathname.startsWith("/app/profile")) ||
+      (to === "/app/messages" && pathname.startsWith("/app/messages"))
+    );
   }
 
   function badgeFor(item: (typeof NAV)[number]) {
@@ -391,7 +397,7 @@ function AppLoadError({ message, onRetry }: { message: string; onRetry: () => vo
 
 function mobileLabel(to: (typeof NAV)[number]["to"]) {
   if (to === "/app/home") return "News";
-  if (to === "/app/inbox") return "Inbox";
+  if (to === "/app/inbox") return "Messages";
   if (to === "/app/agent") return "Bee";
   if (to === "/app/profile/me") return "Profile";
   return "Discover";

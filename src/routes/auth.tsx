@@ -9,15 +9,12 @@ import {
   Camera,
   Heart,
   MessageCircle,
-  Play,
   ShieldCheck,
   Users,
 } from "lucide-react";
 import { useState } from "react";
-import { setAuth, setIntros, setUser } from "@/lib/store";
-import { SEED_PROFILES } from "@/lib/mock-data";
-import type { IntroRequest, Profile } from "@/lib/types";
-import { signIn, signUp, verifyEmailCode, fetchMyProfile } from "@/lib/auth";
+import { setUser } from "@/lib/store";
+import { signInWithEmailOnly, fetchMyProfile } from "@/lib/auth";
 
 const SOCIAL_IMAGES = [
   "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=85",
@@ -33,99 +30,29 @@ const PEOPLE = [
 
 export function AuthPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">("signup");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [verifying, setVerifying] = useState(false);
-  const [code, setCode] = useState("");
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!email || !password) return;
+    if (!email.trim()) return;
     setSubmitting(true);
     setError("");
     try {
-      if (mode === "signup") {
-        const result = await signUp(email, password);
-        if (result?.requireEmailVerification) {
-          setVerifying(true);
-        } else if (result?.accessToken) {
-          navigate({ to: "/onboarding" });
-        }
+      await signInWithEmailOnly(email.trim());
+      const profile = await fetchMyProfile();
+      if (profile && profile.full_name && profile.current_ask) {
+        setUser(profile);
+        navigate({ to: "/app/home" });
       } else {
-        await signIn(email, password);
-        const profile = await fetchMyProfile();
-        if (profile && profile.full_name && profile.current_ask) {
-          setUser(profile);
-          navigate({ to: "/app/home" });
-        } else {
-          navigate({ to: "/onboarding" });
-        }
+        navigate({ to: "/onboarding" });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not sign in");
     } finally {
       setSubmitting(false);
     }
-  }
-
-  async function submitCode(e: React.FormEvent) {
-    e.preventDefault();
-    setSubmitting(true);
-    setError("");
-    try {
-      await verifyEmailCode(email, code);
-      navigate({ to: "/onboarding" });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Invalid or expired code");
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  function loginDemo() {
-    const demoUser: Profile = {
-      ...SEED_PROFILES[0],
-      id: "me",
-      user_id: "me",
-      full_name: "Alex Morgan",
-      profession: "Founder",
-      company: "Northstar Studio",
-      current_ask:
-        "Find AI founders and product mentors who can give feedback on a B2B onboarding flow.",
-      agent: {
-        ...SEED_PROFILES[0].agent,
-        agent_name: "Alex Agent",
-        agent_intro:
-          "I represent Alex, a founder looking for high-context product feedback and warm startup intros.",
-      },
-    };
-    const demoIntros: IntroRequest[] = [
-      {
-        id: "demo-intro-1",
-        from_user_id: "me",
-        to_user_id: "sofia",
-        message:
-          "Alex and Sofia both care about onboarding quality and AI UX. I think a 20-minute prototype review would be useful for both sides.",
-        status: "pending",
-        created_at: Date.now() - 1000 * 60 * 18,
-      },
-      {
-        id: "demo-intro-2",
-        from_user_id: "me",
-        to_user_id: "omar",
-        message:
-          "Alex is refining early GTM for an onboarding product. Omar can pressure-test the ICP and suggest a sharper first experiment.",
-        status: "accepted",
-        created_at: Date.now() - 1000 * 60 * 90,
-      },
-    ];
-    setAuth({ email: "demo@getmybee.app" });
-    setUser(demoUser);
-    setIntros(demoIntros);
-    navigate({ to: "/app/home" });
   }
 
   return (
@@ -189,13 +116,6 @@ export function AuthPage() {
                 intros, reactions, and agent-assisted recommendations.
               </p>
               <div className="mt-7 flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  onClick={loginDemo}
-                  className="inline-flex items-center gap-2 rounded-full bg-[#f7b801] px-5 py-3 text-sm font-black text-black shadow-xl transition hover:-translate-y-0.5 hover:bg-[#ffd14a]"
-                >
-                  Use demo account <Play className="h-4 w-4 fill-current" />
-                </button>
                 <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-5 py-3 text-sm font-black backdrop-blur-xl">
                   <ShieldCheck className="h-4 w-4" /> Approval-gated
                 </span>
@@ -261,7 +181,7 @@ export function AuthPage() {
                 Start here
               </p>
               <h2 className="mt-2 text-3xl font-black tracking-tight md:text-4xl">
-                {mode === "signup" ? "Create your social agent" : "Welcome back"}
+                Sign in with your email
               </h2>
             </div>
             <div className="hidden h-16 w-16 items-center justify-center rounded-[1.4rem] bg-[#e8f0ff] sm:flex">
@@ -273,90 +193,34 @@ export function AuthPage() {
             networking agent.
           </p>
 
-          {verifying ? (
-            <form onSubmit={submitCode} className="mt-7 space-y-4">
-              <p className="text-sm font-semibold text-slate-600">
-                We sent a 6-digit code to <strong>{email}</strong>. Enter it below.
-              </p>
-              <div className="space-y-2">
-                <Label htmlFor="code" className="font-black">
-                  Verification code
-                </Label>
-                <Input
-                  id="code"
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  required
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-                  className="h-13 rounded-2xl border-slate-200 bg-slate-50 px-4 text-center text-2xl font-black tracking-[0.5em]"
-                  placeholder="000000"
-                />
-              </div>
-              {error && <p className="text-sm font-semibold text-destructive">{error}</p>}
-              <Button
-                type="submit"
-                className="h-13 w-full rounded-2xl bg-black text-base font-black text-white hover:bg-black/85"
-                disabled={submitting}
-              >
-                {submitting ? "Verifying..." : "Verify email"}
-              </Button>
-              <button
-                type="button"
-                onClick={() => setVerifying(false)}
-                className="w-full text-center text-sm font-semibold text-slate-500 hover:text-black"
-              >
-                Back to sign up
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={submit} className="mt-7 space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="font-black">
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-13 rounded-2xl border-slate-200 bg-slate-50 px-4 text-base font-semibold"
-                  placeholder="you@example.com"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password" className="font-black">
-                  Password
-                </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="h-13 rounded-2xl border-slate-200 bg-slate-50 px-4 text-base font-semibold"
-                  placeholder="Password"
-                />
-              </div>
-              {error && <p className="text-sm font-semibold text-destructive">{error}</p>}
-              <Button
-                type="submit"
-                className="h-13 w-full rounded-2xl bg-black text-base font-black text-white hover:bg-black/85"
-                disabled={submitting}
-              >
-                {submitting ? "Connecting..." : "Enter the feed"}
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-              <button
-                type="button"
-                onClick={loginDemo}
-                className="flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-slate-100 text-base font-black text-black transition hover:-translate-y-0.5 hover:bg-slate-200"
-              >
-                Use demo account <Play className="h-4 w-4 fill-current" />
-              </button>
-            </form>
-          )}
+          <form onSubmit={submit} className="mt-7 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email" className="font-black">
+                Email
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="h-13 rounded-2xl border-slate-200 bg-slate-50 px-4 text-base font-semibold"
+                placeholder="you@example.com"
+              />
+            </div>
+            <p className="text-xs font-semibold text-slate-400">
+              No password needed — your email gets you in.
+            </p>
+            {error && <p className="text-sm font-semibold text-destructive">{error}</p>}
+            <Button
+              type="submit"
+              className="h-13 w-full rounded-2xl bg-black text-base font-black text-white hover:bg-black/85"
+              disabled={submitting}
+            >
+              {submitting ? "Connecting..." : "Continue with email"}
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </form>
 
           <div className="mt-5 grid grid-cols-3 gap-2">
             {["Stories", "Matches", "Messages"].map((item) => (
@@ -368,16 +232,6 @@ export function AuthPage() {
               </div>
             ))}
           </div>
-
-          <button
-            type="button"
-            onClick={() => setMode((m) => (m === "signup" ? "signin" : "signup"))}
-            className="mt-5 w-full text-center text-sm font-black text-slate-500 hover:text-black"
-          >
-            {mode === "signup"
-              ? "Already have an account? Sign in"
-              : "New to Get My Bee? Create one"}
-          </button>
         </section>
       </main>
     </div>

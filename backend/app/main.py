@@ -1,34 +1,31 @@
+"""GetMyBee agent backend — FastAPI on InsForge compute.
+
+Four pillars (Registry / Discovery / Interaction / Trust) + Interview, with an
+LLM invoked at bounded points and humans approving every meaningful action.
+"""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import a2a, agents, auth, communities, conversations, discover, intros, me, profiles, ws
-from app.core.config import get_settings
+from .config import settings
+from .routers import agents, auth, discovery, interviews, messages
 
-settings = get_settings()
-
-app = FastAPI(title=settings.app_name)
+app = FastAPI(title="GetMyBee Agent API", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[str(origin) for origin in settings.cors_origins],
-    allow_credentials=True,
+    allow_origins=list({settings.frontend_origin, "http://localhost:5173", "http://127.0.0.1:5173"}),
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
 @app.get("/health")
-async def health() -> dict[str, str]:
+async def health():
     return {"status": "ok"}
 
 
 app.include_router(auth.router)
-app.include_router(me.router)
-app.include_router(communities.router)
-app.include_router(profiles.router)
-app.include_router(discover.router)
-app.include_router(intros.router)
-app.include_router(conversations.router)
 app.include_router(agents.router)
-app.include_router(ws.router)
-app.include_router(a2a.router)
+app.include_router(discovery.router)
+app.include_router(messages.router)
+app.include_router(interviews.router)

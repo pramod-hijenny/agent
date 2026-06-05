@@ -4,7 +4,7 @@ node_modules
 .env.local
 migrations
 .insforge
-backend
+functions
 .cursor
 .vscode
 .claude

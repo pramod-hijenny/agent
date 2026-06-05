@@ -16,6 +16,7 @@ import {
   type LucideIcon,
   MapPin,
   MessageCircle,
+  Send,
   Music2,
   Sparkles,
   UserPlus,
@@ -153,6 +154,15 @@ export function ProfilePage() {
                     >
                       <Link to="/app/discover">
                         <MessageCircle className="h-4 w-4" /> Ask my agent
+                      </Link>
+                    </Button>
+                    <Button
+                      asChild
+                      variant="secondary"
+                      className={cn("rounded-full font-semibold", theme.secondaryButton)}
+                    >
+                      <Link to="/app/messages/$id" params={{ id: profile.id }}>
+                        <Send className="h-4 w-4" /> Message
                       </Link>
                     </Button>
                   </>

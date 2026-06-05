@@ -1,5 +1,4 @@
 import { insforge } from "@/lib/insforge";
-import { getAuth } from "@/lib/store";
 import { DEFAULT_PERMISSIONS } from "@/lib/types";
 import type { Profile, IntroRequest } from "@/lib/types";
 
@@ -27,6 +26,40 @@ export async function signOut() {
   await insforge.auth.signOut();
 }
 
+// Passwordless convenience sign-in: the user enters only an email; we derive a
+// deterministic password under the hood so InsForge auth (JWT + RLS) still works.
+// NOTE: this is a no-password shortcut for now, not real security.
+function derivePassword(email: string): string {
+  const seed = btoa(unescape(encodeURIComponent(email.trim().toLowerCase())));
+  return `Gmb!${seed}9a`;
+}
+
+export async function signInWithEmailOnly(email: string) {
+  const password = derivePassword(email);
+  const existing = await insforge.auth.signInWithPassword({ email, password });
+  if (!existing.error) return existing.data;
+
+  // No account with the derived password → create it (verification is disabled).
+  let created = await insforge.auth.signUp({ email, password });
+  if (created.error) {
+    // Email already exists with a different password. Ask the backend (admin) to
+    // delete that account, then recreate it passwordless. (Wipes the old account.)
+    const apiUrl = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "") || "";
+    if (apiUrl) {
+      await fetch(`${apiUrl}/auth/reset-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      }).catch(() => {});
+    }
+    created = await insforge.auth.signUp({ email, password });
+    if (created.error) throw new Error(created.error.message);
+  }
+  const after = await insforge.auth.signInWithPassword({ email, password });
+  if (after.error) throw new Error(after.error.message);
+  return after.data;
+}
+
 export async function getCurrentUser() {
   const { data, error } = await insforge.auth.getCurrentUser();
   if (error || !data?.user) return null;
@@ -38,14 +71,7 @@ export async function getInsforgeAccessToken() {
   const client = insforge as unknown as {
     tokenManager?: { getAccessToken: () => string | null };
   };
-  const token = client.tokenManager?.getAccessToken() ?? null;
-  if (token) return token;
-  const email = getAuth()?.email;
-  if (email === "demo@getmybee.app" || email === "demo@agentcircle.app") {
-    return "demo-agentcircle-local";
-  }
-  if (import.meta.env.DEV) return "demo-agentcircle-local";
-  return null;
+  return client.tokenManager?.getAccessToken() ?? null;
 }
 
 // ─── Profile DB helpers ──────────────────────────────────────────
@@ -176,9 +202,8 @@ function dbRowToProfile(row: Record<string, unknown>): Profile {
 function profileToDbRow(profile: Profile, userId: string) {
   return {
     user_id: userId,
-    name: profile.full_name,
+    display_name: profile.full_name || "Member", // profiles.display_name is NOT NULL
     full_name: profile.full_name,
-    email: null,
     community_id: profile.community_id || "demo",
     city: profile.city,
     profession: profile.profession,

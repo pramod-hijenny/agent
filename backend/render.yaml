@@ -1,0 +1,31 @@
+# Render Blueprint for the GetMyBee agent backend (native Python, no Docker).
+# Connect this repo in the Render dashboard; it builds from backend/ via the
+# Python buildpack. Secret env vars (sync:false) are set in the dashboard.
+services:
+  - type: web
+    name: getmybee-api
+    runtime: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      # --- secrets: set these in the Render dashboard (not committed) ---
+      - key: NEBIUS_API_KEY
+        sync: false
+      - key: INSFORGE_API_KEY # InsForge service key (ik_...) for privileged ops
+        sync: false
+      # --- non-secret config ---
+      - key: INSFORGE_BASE_URL
+        value: https://mep6b952.us-east.insforge.app
+      - key: OPENAI_BASE_URL # Nebius chat (Kimi)
+        value: https://api.tokenfactory.us-central1.nebius.com/v1/
+      - key: OPENAI_MODEL
+        value: moonshotai/Kimi-K2.6
+      - key: OPENAI_EMBED_BASE_URL # Nebius embeddings (Qwen3, 4096-dim)
+        value: https://api.tokenfactory.nebius.com/v1/
+      - key: OPENAI_EMBED_MODEL
+        value: Qwen/Qwen3-Embedding-8B
+      - key: FRONTEND_ORIGIN
+        value: https://agentmatch-circle.onrender.com

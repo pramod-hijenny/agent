@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { insforge } from "@/lib/insforge";
+import { getCurrentUser } from "@/lib/auth";
 
 export interface MediaAsset {
   id: string;
@@ -42,7 +43,12 @@ export function useMediaAssets() {
   const uploadFile = async (file: File, agentId?: string) => {
     try {
       setError(null);
-      const filename = `${Date.now()}-${file.name}`;
+      const user = await getCurrentUser();
+      if (!user) throw new Error("Sign in before uploading.");
+      // Key objects under the owner's folder — the "uploads" bucket RLS only
+      // permits writes where the key is prefixed with the uploader's auth.uid().
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+      const filename = `${user.id}/${Date.now()}-${safeName}`;
 
       // Upload to storage
       const { data: uploadData, error: uploadError } = await insforge.storage
@@ -52,14 +58,14 @@ export function useMediaAssets() {
       if (uploadError) throw uploadError;
 
       // Get public URL
-      const { data: publicUrl } = insforge.storage.from("uploads").getPublicUrl(filename);
+      const publicUrl = insforge.storage.from("uploads").getPublicUrl(filename);
 
       // Save metadata to database
       const { error: dbError } = await insforge.database.from("media_assets").insert([
         {
           bucket: "uploads",
           object_key: filename,
-          url: publicUrl?.publicUrl || "",
+          url: publicUrl,
           content_type: file.type,
           agent_id: agentId || null,
         },
@@ -80,7 +86,7 @@ export function useMediaAssets() {
       setError(null);
 
       // Delete from storage
-      const { error: storageError } = await insforge.storage.from("uploads").remove([objectKey]);
+      const { error: storageError } = await insforge.storage.from("uploads").remove(objectKey);
 
       if (storageError) throw storageError;
 

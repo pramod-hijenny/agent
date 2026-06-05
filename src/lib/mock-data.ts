@@ -190,7 +190,7 @@ export const SEED_PROFILES: Profile[] = [
       agent_intro:
         "I represent Omar, a growth operator who helps technical founders build repeatable pipeline.",
       current_mission: "Find founders who need GTM help and can use tactical feedback.",
-      status: "active",
+      status: "paused",
       memory: [
         "Strong fit for founders with early usage but weak pipeline.",
         "Can give tactical GTM feedback.",
@@ -298,7 +298,7 @@ export const SEED_PROFILES: Profile[] = [
       tone: "Direct",
       agent_intro: "I represent Marcus, a developer relations advisor for technical startup teams.",
       current_mission: "Find devtool founders who need practical developer adoption feedback.",
-      status: "active",
+      status: "paused",
       memory: [
         "Best fit is technical founders building for developers.",
         "Can review docs, launch plans, and community strategy.",

@@ -21,8 +21,8 @@ const AgentPage = lazy(() =>
 const InboxPage = lazy(() =>
   import("@/routes/app.inbox").then((module) => ({ default: module.InboxPage })),
 );
-const Connections = lazy(() =>
-  import("@/routes/app.connections").then((module) => ({ default: module.Connections })),
+const MessagesPage = lazy(() =>
+  import("@/routes/app.messages").then((module) => ({ default: module.MessagesPage })),
 );
 const Settings = lazy(() =>
   import("@/routes/app.settings").then((module) => ({ default: module.Settings })),
@@ -35,11 +35,11 @@ const TITLES: Record<string, string> = {
   "/": "Get My Bee - Warm intros for founder networks",
   "/auth": "Sign in - Get My Bee",
   "/onboarding": "Set up your bee - Get My Bee",
-  "/app/home": "Home - Get My Bee",
+  "/app/home": "Feed - Get My Bee",
   "/app/discover": "Discover - Get My Bee",
   "/app/agent": "My Bee - Get My Bee",
-  "/app/inbox": "Inbox - Get My Bee",
-  "/app/connections": "Connections - Get My Bee",
+  "/app/inbox": "Intros - Get My Bee",
+  "/app/messages": "Messages - Get My Bee",
   "/app/settings": "Settings - Get My Bee",
 };
 
@@ -60,6 +60,10 @@ function AppRoutes() {
       document.title = "Profile - Get My Bee";
       return;
     }
+    if (pathname.startsWith("/app/messages")) {
+      document.title = "Messages - Get My Bee";
+      return;
+    }
     document.title = TITLES[pathname] ?? "Get My Bee";
   }, [pathname]);
 
@@ -67,11 +71,7 @@ function AppRoutes() {
   if (pathname === "/auth") return withRouteBoundary(pathname, <AuthPage />);
   if (pathname === "/onboarding") return withRouteBoundary(pathname, <Onboarding />);
 
-  if (pathname === "/app") {
-    navigate("/app/home", { replace: true });
-    return null;
-  }
-  if (pathname === "/app/feed") {
+  if (pathname === "/app" || pathname === "/app/feed") {
     navigate("/app/home", { replace: true });
     return null;
   }
@@ -94,8 +94,17 @@ function renderAppRoute(pathname: string) {
   if (pathname === "/app/discover") return <Discover />;
   if (pathname === "/app/agent") return <AgentPage />;
   if (pathname === "/app/inbox") return <InboxPage />;
-  if (pathname === "/app/connections") return <Connections />;
   if (pathname === "/app/settings") return <Settings />;
+
+  const messagesMatch = pathname.match(/^\/app\/messages(?:\/([^/]+))?$/);
+  if (messagesMatch) {
+    const threadId = messagesMatch[1];
+    return (
+      <RouteParamsProvider params={threadId ? { id: decodeURIComponent(threadId) } : {}}>
+        <MessagesPage />
+      </RouteParamsProvider>
+    );
+  }
 
   const profileMatch = pathname.match(/^\/app\/profile\/([^/]+)$/);
   if (profileMatch) {

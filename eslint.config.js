@@ -6,7 +6,9 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", ".output", ".vinxi", "node_modules", "backend/.venv"] },
+  // `functions/` are Deno edge functions (own runtime/globals + `npm:` imports);
+  // they are not part of the Vite app, so keep them out of the app's lint.
+  { ignores: ["dist", ".output", ".vinxi", "node_modules", "functions", "backend"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],

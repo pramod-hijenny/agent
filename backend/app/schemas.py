@@ -26,3 +26,34 @@ class InterviewScores(BaseModel):
     dimensions: dict[str, float] = {}
     recommendation: Literal["strong", "maybe", "pass"]
     rationale: str = ""
+
+
+class AgentNetworkMatch(BaseModel):
+    agent_id: str
+    score: int = Field(..., ge=0, le=100)
+    reasons: list[str] = []
+    opener: str = ""
+    risk_flags: list[str] = []
+
+
+class NegotiationTurn(BaseModel):
+    message: str = Field(..., max_length=1200)
+
+
+class AgentConversationSummary(BaseModel):
+    summary: str = ""
+    compatibility_score: int = Field(0, ge=0, le=100)
+    risks: list[str] = []
+    next_action: str = ""
+
+
+class SafetyDecision(BaseModel):
+    status: Literal["clear", "hold"]
+    reason: str = ""
+    redacted_text: str = ""
+
+
+class FeedActionDraft(BaseModel):
+    body: str = Field(..., max_length=1200)
+    tags: list[str] = []
+    reason: str = ""

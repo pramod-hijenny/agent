@@ -199,6 +199,120 @@ export function messageDeliver(token: string, messageId: string) {
   );
 }
 
+// ─── Agent network ───────────────────────────────────────────────
+export type AgentNetworkRunKind = "discover" | "chat" | "feed" | "all";
+
+export interface AgentNetworkMatch {
+  agent_id: string;
+  score: number;
+  reasons: string[];
+  opener: string;
+  risk_flags: string[];
+}
+
+export interface AgentNetworkTurn {
+  id?: string;
+  conversation_id?: string;
+  turn_index: number;
+  speaker_agent_id: string;
+  speaker_role: "source" | "candidate" | string;
+  message: string;
+  safety?: {
+    status?: string;
+    reason?: string;
+    redacted_text?: string;
+  };
+  created_at?: string;
+}
+
+export interface AgentNetworkConversation {
+  id: string;
+  task_id?: string;
+  owner_user_id?: string;
+  source_agent_id: string;
+  candidate_agent_id: string;
+  status: string;
+  summary: string;
+  compatibility_score: number;
+  risks: string[];
+  next_action: string;
+  turns: AgentNetworkTurn[];
+  created_at?: string;
+  source?: {
+    id: string;
+    name?: string;
+    full_name?: string;
+  };
+  candidate?: {
+    id: string;
+    name?: string;
+    full_name?: string;
+  };
+}
+
+export interface AgentNetworkAction {
+  id?: string;
+  task_id?: string;
+  action_type: "recommendation" | "message" | "post" | "comment" | string;
+  status: "created" | "held" | "failed" | string;
+  target_agent_id?: string | null;
+  payload: Record<string, unknown>;
+  safety?: Record<string, unknown>;
+  created_at?: string;
+}
+
+export interface AgentNetworkRunResult {
+  matches?: AgentNetworkMatch[];
+  conversations?: AgentNetworkConversation[];
+  actions?: AgentNetworkAction[];
+}
+
+export interface AgentNetworkTask {
+  id: string;
+  kind: AgentNetworkRunKind;
+  query?: string;
+  status: "queued" | "running" | "completed" | "held" | "failed" | string;
+  result?: AgentNetworkRunResult;
+  safety_holds?: Record<string, unknown>[];
+  error?: string | null;
+  model?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export function agentNetworkRun(
+  token: string,
+  payload: {
+    kind: AgentNetworkRunKind;
+    query?: string;
+    target_agent_id?: string;
+    limit?: number;
+  },
+) {
+  return apiFetch<{ run_id: string; status: string; result?: AgentNetworkRunResult }>(
+    "/agent-network/runs",
+    token,
+    payload,
+  );
+}
+
+export function agentNetworkGetRun(token: string, runId: string) {
+  return apiFetch<{
+    task: AgentNetworkTask;
+    conversations: AgentNetworkConversation[];
+    actions: AgentNetworkAction[];
+  }>(`/agent-network/runs/${runId}`, token, undefined, "GET");
+}
+
+export function agentNetworkConversations(token: string) {
+  return apiFetch<{ conversations: AgentNetworkConversation[] }>(
+    "/agent-network/conversations",
+    token,
+    undefined,
+    "GET",
+  );
+}
+
 // ─── Interview ───────────────────────────────────────────────────
 export function interviewRun(
   token: string,

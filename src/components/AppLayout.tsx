@@ -3,7 +3,6 @@ import {
   Bell,
   Compass,
   Home,
-  Inbox,
   LogOut,
   Menu,
   MessageCircle,
@@ -29,8 +28,7 @@ import {
 const NAV = [
   { to: "/app/home", label: "Feed", icon: Home, badge: null },
   { to: "/app/discover", label: "Discover", icon: Compass, badge: null },
-  { to: "/app/messages", label: "Messages", icon: MessageCircle, badge: null },
-  { to: "/app/inbox", label: "Intros", icon: Inbox, badge: "pendingIntros" },
+  { to: "/app/messages", label: "Messages", icon: MessageCircle, badge: "pendingIntros" },
   { to: "/app/agent", label: "My Bee", icon: Sparkles, badge: null },
   { to: "/app/profile/me", label: "Profile", icon: User, badge: null },
   { to: "/app/settings", label: "Settings", icon: Settings, badge: null },
@@ -133,28 +131,31 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[var(--app-canvas)] text-foreground">
-      <div className="honeycomb-bg pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_9%_14%,rgb(247_184_1_/_0.3),transparent_30rem),radial-gradient(circle_at_92%_8%,rgb(17_17_17_/_0.1),transparent_34rem),linear-gradient(135deg,#fffef8,#fff4c8_48%,#ffffff)]" />
+    <div className="min-h-screen overflow-x-hidden bg-[#f4f6f8] text-foreground">
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-[#f4f6f8]" />
       <div className="min-h-screen w-full xl:pl-[260px] 2xl:pl-[280px]">
-        <aside className="fixed inset-y-0 left-0 z-30 hidden w-[260px] overflow-y-auto border-r border-[var(--app-border)] bg-[oklch(0.99_0.016_88_/_0.94)] px-5 py-5 shadow-[12px_0_50px_oklch(0.22_0.035_80_/_0.08)] backdrop-blur-xl xl:flex xl:flex-col 2xl:w-[280px] 2xl:px-6">
-          <Link to="/app/home" className="group flex items-center gap-3">
-            <BrandMark glyphClassName="h-10" />
+        <aside className="fixed inset-y-0 left-0 z-30 hidden w-[260px] overflow-y-auto bg-transparent px-3 py-4 xl:flex xl:flex-col 2xl:w-[280px]">
+          <Link to="/app/home" className="group flex h-12 items-center rounded-[0.75rem] px-2">
+            <BrandMark glyphClassName="h-9" />
           </Link>
 
-          <div className="app-soft-panel mt-7 flex items-center gap-3 rounded-[1.15rem] p-3">
+          <Link
+            to="/app/profile/me"
+            className="mt-5 flex items-center gap-3 rounded-[0.75rem] p-2.5 transition hover:bg-[#f0f2f5]"
+          >
             <div className="relative">
-              <GradientAvatar name={user.full_name} colorClass={user.avatar_color} size="lg" />
+              <GradientAvatar name={user.full_name} colorClass={user.avatar_color} size="md" />
               <span className="absolute -right-1 -top-1 h-3.5 w-3.5 rounded-full border-2 border-white bg-[#f7b801]" />
             </div>
             <div className="min-w-0">
-              <p className="truncate text-sm font-black text-[var(--app-ink)]">{user.full_name}</p>
+              <p className="truncate text-[15px] font-black text-[#1c1e21]">{user.full_name}</p>
               <p className="truncate text-xs font-semibold text-[var(--app-muted)]">
                 @{user.id || "member"}
               </p>
             </div>
-          </div>
+          </Link>
 
-          <nav className="mt-7 space-y-1.5">
+          <nav className="mt-5 space-y-1">
             {NAV.map((n) => {
               const active = isActive(n.to);
               const badge = badgeFor(n);
@@ -164,23 +165,27 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   to={n.to}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "group flex h-11 items-center gap-3 rounded-[1rem] px-3.5 text-[13px] font-black transition-all",
+                    "group flex h-12 items-center gap-3 rounded-[0.75rem] px-2.5 text-[15px] font-black transition-colors",
                     active
-                      ? "bg-black text-[#f7b801] shadow-[0_10px_24px_oklch(0.18_0.03_80_/_0.22)]"
-                      : "text-[var(--app-ink-soft)] hover:bg-[#fff4c8] hover:text-black",
+                      ? "bg-[#f0f2f5] text-[#1c1e21]"
+                      : "text-[#30333a] hover:bg-[#f0f2f5] hover:text-[#1c1e21]",
                   )}
                 >
-                  <n.icon
+                  <span
                     className={cn(
-                      "h-4 w-4",
-                      active ? "text-[#f7b801]" : "text-[var(--app-muted)] group-hover:text-black",
+                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
+                      active
+                        ? "bg-black text-[#f7b801]"
+                        : "bg-[#e9edf2] text-[#606770] group-hover:bg-[#dfe3e8] group-hover:text-[#1c1e21]",
                     )}
-                  />
+                  >
+                    <n.icon className="h-5 w-5" />
+                  </span>
                   <span className="min-w-0 flex-1 truncate">{n.label}</span>
                   {badge && (
                     <span
                       className={cn(
-                        "flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-[11px]",
+                        "flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-[11px] font-black",
                         active ? "bg-[#f7b801] text-black" : "bg-black text-white",
                       )}
                     >
@@ -192,20 +197,24 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          <div className="app-card mt-auto rounded-[1.2rem] p-4 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[1rem] bg-[#fff4c8] text-white shadow-lg ring-1 ring-[#f7b801]/25">
-              <BeeGlyph className="h-8 w-10" />
+          <div className="mt-auto rounded-[0.9rem] border border-[#dfe3e8] bg-[#f7f8fa] p-3">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-[#dfe3e8]">
+                <BeeGlyph className="h-7 w-9" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-black text-[#1c1e21]">Bee is online</p>
+                <p className="truncate text-xs font-semibold text-[#65676b]">
+                  {pendingIntroCount > 0
+                    ? `${pendingIntroCount} intro${pendingIntroCount === 1 ? "" : "s"} need review.`
+                    : "Intros are ready."}
+                </p>
+              </div>
             </div>
-            <p className="mt-3 text-sm font-black text-black">Bee is online</p>
-            <p className="mt-1 text-xs font-semibold leading-5 text-[var(--app-muted)]">
-              {pendingIntroCount > 0
-                ? `${pendingIntroCount} intro${pendingIntroCount === 1 ? "" : "s"} need review.`
-                : "Approval-gated intros are ready."}
-            </p>
           </div>
           <Button
             variant="ghost"
-            className="mt-3 h-10 justify-start rounded-[1rem] px-4 text-[13px] font-bold text-[var(--app-muted)] hover:bg-[#fff4c8] hover:text-black"
+            className="mt-2 h-11 justify-start rounded-[0.75rem] px-3 text-[14px] font-bold text-[#65676b] hover:bg-[#f0f2f5] hover:text-[#1c1e21]"
             onClick={signOut}
           >
             <LogOut className="h-4 w-4" />
@@ -228,7 +237,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   <Search className="h-5 w-5" />
                 </Link>
                 <Link
-                  to="/app/inbox"
+                  to="/app/messages"
                   className="app-icon-button flex h-10 w-10 items-center justify-center rounded-[0.9rem]"
                   aria-label="Notifications"
                 >
@@ -397,8 +406,8 @@ function AppLoadError({ message, onRetry }: { message: string; onRetry: () => vo
 
 function mobileLabel(to: (typeof NAV)[number]["to"]) {
   if (to === "/app/home") return "News";
-  if (to === "/app/inbox") return "Messages";
   if (to === "/app/agent") return "Bee";
   if (to === "/app/profile/me") return "Profile";
+  if (to === "/app/messages") return "Messages";
   return "Discover";
 }

@@ -32,7 +32,12 @@ export function BrandMark({ compact, className, glyphClassName, light }: BrandMa
   if (compact) {
     return (
       <span className={cn("inline-flex items-center", className)}>
-        <BeeGlyph className={glyphClassName} />
+        <img
+          src="/getmybee-mark.svg"
+          alt="Get My Bee"
+          className={cn("h-12 w-auto select-none", light && "brightness-0 invert", glyphClassName)}
+          draggable={false}
+        />
       </span>
     );
   }

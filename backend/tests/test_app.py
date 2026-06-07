@@ -24,3 +24,8 @@ def test_health():
 def test_agents_requires_auth():
     r = client.post("/agents", json={"name": "Test Bee", "interests": ["AI"]})
     assert r.status_code == 401
+
+
+def test_agent_network_runs_require_auth():
+    r = client.post("/agent-network/runs", json={"kind": "all"})
+    assert r.status_code == 401

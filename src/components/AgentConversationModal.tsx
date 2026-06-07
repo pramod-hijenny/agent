@@ -5,9 +5,16 @@ import { AiBadge } from "./AiBadge";
 import { SafetyNotice } from "./SafetyNotice";
 import { AlertCircle, Check, Loader2, Sparkles, X } from "lucide-react";
 import type { Profile } from "@/lib/types";
-import { generateTranscript, summarize, type ScoredMatch } from "@/lib/matching";
+import { type ScoredMatch } from "@/lib/matching";
 import { useEffect, useState } from "react";
-import { messageApprove, messageCreate } from "@/lib/api";
+import {
+  agentNetworkGetRun,
+  agentNetworkRun,
+  messageApprove,
+  messageCreate,
+  type AgentNetworkConversation,
+  type AgentNetworkTurn,
+} from "@/lib/api";
 import { getInsforgeAccessToken } from "@/lib/auth";
 
 // Drives the intro flow against the FastAPI backend: messageCreate (the sender's
@@ -37,10 +44,14 @@ export function AgentConversationModal({
   const [error, setError] = useState("");
   const [outcome, setOutcome] = useState<"approved" | "declined" | null>(null);
   const [outcomeReason, setOutcomeReason] = useState("");
+  const [agentTalk, setAgentTalk] = useState<AgentNetworkConversation | null>(null);
+  const [agentTalkLoading, setAgentTalkLoading] = useState(false);
+  const [agentTalkError, setAgentTalkError] = useState("");
   const [revealed, setRevealed] = useState(0);
-  const summary = match ? summarize(me, match.profile, match) : null;
-  const transcript = match ? generateTranscript(me, match.profile, query) : [];
-  const chatDone = revealed >= transcript.length;
+  const transcript = agentTalk?.turns ?? [];
+  const chatDone =
+    !agentTalkLoading &&
+    (Boolean(agentTalkError) || Boolean(agentTalk && revealed >= transcript.length));
 
   useEffect(() => {
     if (!open || !match) return;
@@ -51,6 +62,7 @@ export function AgentConversationModal({
       setError("");
       setMessageId(null);
       setDraftMessage("");
+      setDraftSource("pending");
       setOutcome(null);
       setOutcomeReason("");
       try {
@@ -77,10 +89,53 @@ export function AgentConversationModal({
     };
   }, [open, match, me, query]);
 
+  useEffect(() => {
+    if (!open || !match) return;
+    const activeMatch = match;
+    let cancelled = false;
+    async function runAgentTalk() {
+      setAgentTalkLoading(true);
+      setAgentTalkError("");
+      setAgentTalk(null);
+      setRevealed(0);
+      try {
+        const token = await getInsforgeAccessToken();
+        if (!token) throw new Error("Sign in again so your agents can talk.");
+        const run = await agentNetworkRun(token, {
+          kind: "chat",
+          query,
+          target_agent_id: activeMatch.profile.id,
+          limit: 1,
+        });
+        let conversation = run.result?.conversations?.[0] ?? null;
+        if ((!conversation || !conversation.turns?.length) && run.run_id) {
+          const detail = await agentNetworkGetRun(token, run.run_id);
+          conversation = detail.conversations[0] ?? conversation;
+        }
+        if (cancelled) return;
+        if (!conversation) {
+          setAgentTalkError("No agent-agent conversation was returned for this match.");
+          return;
+        }
+        setAgentTalk(withKnownParticipants(conversation, me, activeMatch.profile));
+      } catch (err) {
+        if (!cancelled) {
+          setAgentTalkError(err instanceof Error ? err.message : "Could not run the agent chat.");
+        }
+      } finally {
+        if (!cancelled) setAgentTalkLoading(false);
+      }
+    }
+    void runAgentTalk();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, match, me, query]);
+
   // Reveal the agent-to-agent conversation one turn at a time, then unlock the
   // real intro draft below it.
   useEffect(() => {
-    if (!open || !match) return;
+    if (!open || !match || !agentTalk || transcript.length === 0) return;
     setRevealed(0);
     const total = transcript.length;
     const id = setInterval(() => {
@@ -94,7 +149,7 @@ export function AgentConversationModal({
     }, 700);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, match?.profile.id]);
+  }, [open, match?.profile.id, agentTalk?.id, transcript.length]);
 
   if (!match) return null;
   const other = match.profile;
@@ -147,10 +202,10 @@ export function AgentConversationModal({
               />
               <div>
                 <p className="font-semibold text-black">{me.agent.agent_name}</p>
-                <p className="font-semibold text-slate-500">Represents you</p>
+                <p className="font-semibold text-slate-500">Represents {me.full_name}</p>
               </div>
             </div>
-            <AiBadge label="Agent <-> Agent" />
+            <AiBadge label={agentTalk ? "Live backend run" : "Agent <-> Agent"} />
             <div className="flex items-center gap-2">
               <div className="text-right">
                 <p className="font-semibold text-black">{other.agent.agent_name}</p>
@@ -168,26 +223,55 @@ export function AgentConversationModal({
 
           {/* Animated agent-to-agent conversation */}
           <div className="space-y-2">
-            {transcript.slice(0, revealed).map((turn, i) => (
-              <div
-                key={i}
-                className={`flex ${turn.speaker === "user" ? "justify-start" : "justify-end"}`}
-              >
-                <div
-                  className={`max-w-[80%] rounded-[1.1rem] px-3 py-2 text-sm font-medium leading-6 ${
-                    turn.speaker === "user" ? "bg-slate-100 text-black" : "bg-[#fff4c8] text-black"
-                  }`}
-                >
-                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-                    {turn.speaker === "user" ? me.agent.agent_name : other.agent.agent_name}
-                  </p>
-                  {turn.text}
-                </div>
+            {agentTalkLoading && (
+              <div className="flex items-center gap-2 rounded-2xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-600">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Starting a private backend agent chat...
               </div>
-            ))}
-            {!chatDone && (
+            )}
+            {agentTalkError && (
+              <div className="flex items-start gap-2 rounded-2xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>{agentTalkError}</span>
+              </div>
+            )}
+            {agentTalk &&
+              transcript.slice(0, revealed).map((turn) => {
+                const mine = isSourceTurn(agentTalk, turn);
+                return (
+                  <div
+                    key={turn.id || `${agentTalk.id}-${turn.turn_index}`}
+                    className={`flex ${mine ? "justify-start" : "justify-end"}`}
+                  >
+                    <div
+                      className={`max-w-[80%] rounded-[1.1rem] px-3 py-2 text-sm font-medium leading-6 ${
+                        mine ? "bg-slate-100 text-black" : "bg-[#fff4c8] text-black"
+                      }`}
+                    >
+                      <div className="mb-1 flex items-center justify-between gap-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                          {speakerLabel(agentTalk, turn)}
+                        </p>
+                        {turn.safety?.status === "hold" && (
+                          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-800">
+                            Hold
+                          </span>
+                        )}
+                      </div>
+                      {turn.message}
+                    </div>
+                  </div>
+                );
+              })}
+            {!agentTalkLoading && !agentTalkError && agentTalk && transcript.length === 0 && (
+              <div className="rounded-2xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
+                The backend created a conversation, but no transcript turns came back.
+              </div>
+            )}
+            {!chatDone && !agentTalkError && (
               <p className="flex items-center justify-center gap-2 py-1 text-center text-xs font-semibold text-slate-400">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Agents are talking…
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                {agentTalkLoading ? "Agents are negotiating..." : "Revealing backend transcript..."}
               </p>
             )}
           </div>
@@ -245,15 +329,20 @@ export function AgentConversationModal({
                 )}
               </div>
 
-              {summary && draftMessage && (
+              {agentTalk && draftMessage && (
                 <div className="space-y-3 rounded-[1.5rem] bg-[#eef4ff] p-4">
-                  <h4 className="text-sm font-semibold text-black">Match summary</h4>
+                  <h4 className="text-sm font-semibold text-black">Backend agent summary</h4>
                   <dl className="grid grid-cols-2 gap-3 text-sm">
-                    <SummaryRow label="Match strength" value={summary.match_strength} />
-                    <SummaryRow label="Best connection" value={summary.best_connection_type} />
-                    <SummaryRow label="Mutual value" value={summary.mutual_value} />
-                    <SummaryRow label="Conversation starter" value={summary.conversation_starter} />
-                    <SummaryRow label="Suggested activity" value={summary.suggested_activity} />
+                    <SummaryRow label="Fit score" value={`${agentTalk.compatibility_score}/100`} />
+                    <SummaryRow
+                      label="Next action"
+                      value={agentTalk.next_action || "Review intro"}
+                    />
+                    <SummaryRow label="Risk flags" value={formatRisks(agentTalk.risks)} />
+                    <SummaryRow
+                      label="Summary"
+                      value={agentTalk.summary || "The agents completed an in-platform fit check."}
+                    />
                   </dl>
                 </div>
               )}
@@ -298,4 +387,47 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
       <dd className="font-semibold text-black">{value}</dd>
     </div>
   );
+}
+
+function withKnownParticipants(
+  conversation: AgentNetworkConversation,
+  me: Profile,
+  other: Profile,
+): AgentNetworkConversation {
+  return {
+    ...conversation,
+    turns: conversation.turns ?? [],
+    risks: conversation.risks ?? [],
+    source: conversation.source ?? {
+      id: conversation.source_agent_id,
+      name: me.agent.agent_name,
+      full_name: me.full_name,
+    },
+    candidate: conversation.candidate ?? {
+      id: conversation.candidate_agent_id,
+      name: other.agent.agent_name,
+      full_name: other.full_name,
+    },
+  };
+}
+
+function isSourceTurn(conversation: AgentNetworkConversation, turn: AgentNetworkTurn) {
+  return turn.speaker_agent_id === conversation.source_agent_id || turn.speaker_role === "source";
+}
+
+function speakerLabel(conversation: AgentNetworkConversation, turn: AgentNetworkTurn) {
+  if (isSourceTurn(conversation, turn)) {
+    return conversation.source?.name || conversation.source?.full_name || "Your bee";
+  }
+  if (
+    turn.speaker_agent_id === conversation.candidate_agent_id ||
+    turn.speaker_role === "candidate"
+  ) {
+    return conversation.candidate?.name || conversation.candidate?.full_name || "Their bee";
+  }
+  return turn.speaker_role || "Agent";
+}
+
+function formatRisks(risks: string[]) {
+  return risks.length ? risks.join(", ") : "None flagged";
 }

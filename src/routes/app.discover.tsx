@@ -9,14 +9,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Camera, Compass, MapPin, Search, ShieldCheck, Zap } from "lucide-react";
+import { Bot, Camera, Compass, Loader2, MapPin, Search, ShieldCheck, Zap } from "lucide-react";
 import { type ScoredMatch } from "@/lib/matching";
 import { MatchCard } from "@/components/MatchCard";
 import { AgentConversationModal } from "@/components/AgentConversationModal";
 import type { Goal, Profile } from "@/lib/types";
 import { toast } from "sonner";
 import { getInsforgeAccessToken } from "@/lib/auth";
-import { discover as discoverViaApi } from "@/lib/api";
+import { agentNetworkRun, discover as discoverViaApi } from "@/lib/api";
 
 type BackendMatch = Awaited<ReturnType<typeof discoverViaApi>>[number];
 
@@ -32,6 +32,7 @@ export function Discover() {
   const [convoMatch, setConvoMatch] = useState<ScoredMatch | null>(null);
   const [matches, setMatches] = useState<ScoredMatch[]>([]);
   const [loading, setLoading] = useState(true);
+  const [networkRunning, setNetworkRunning] = useState(false);
 
   async function runSearch(searchQuery: string) {
     if (!user) return;
@@ -63,6 +64,27 @@ export function Discover() {
     setQuery(nextQuery);
     if (!draftQuery.trim()) setDraftQuery(defaultQuery);
     await runSearch(nextQuery);
+  }
+
+  async function runMyBee() {
+    const nextQuery = draftQuery.trim() || query || defaultQuery;
+    setNetworkRunning(true);
+    try {
+      const token = await getInsforgeAccessToken();
+      if (!token) throw new Error("Sign in again so your bee can run.");
+      const result = await agentNetworkRun(token, { kind: "all", query: nextQuery, limit: 3 });
+      const held = result.status === "held";
+      toast.success(
+        held
+          ? "Your bee ran and held something for review in Messages."
+          : "Your bee ran discovery, private agent talks, and a feed action.",
+      );
+      await runSearch(nextQuery);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not run your bee");
+    } finally {
+      setNetworkRunning(false);
+    }
   }
 
   return (
@@ -169,6 +191,18 @@ export function Discover() {
             className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-black text-[#f7b801] transition hover:-translate-y-0.5"
           >
             <Search className="h-4 w-4" /> {loading ? "Finding..." : "Find matches"}
+          </button>
+          <button
+            onClick={() => void runMyBee()}
+            disabled={networkRunning}
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-[#f7b801] px-5 py-2.5 text-sm font-black text-black transition hover:-translate-y-0.5 disabled:opacity-60"
+          >
+            {networkRunning ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Bot className="h-4 w-4" />
+            )}
+            {networkRunning ? "Running..." : "Run my bee"}
           </button>
         </div>
       </section>

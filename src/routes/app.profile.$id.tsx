@@ -1,13 +1,14 @@
 import { Link, useParams } from "@/lib/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useUser } from "@/lib/store";
-import { DEMO_COMMUNITY, getSeedProfile, SEED_PROFILES } from "@/lib/mock-data";
+import { DEMO_COMMUNITY } from "@/lib/mock-data";
 import { GradientAvatar } from "@/components/Avatar";
 import { AgentCard } from "@/components/AgentCard";
 import { InterestChips } from "@/components/InterestChips";
 import { Button } from "@/components/ui/button";
 import { AiBadge } from "@/components/AiBadge";
-import { GOAL_LABELS } from "@/lib/types";
+import { DEFAULT_PERMISSIONS, GOAL_LABELS } from "@/lib/types";
+import { insforge } from "@/lib/insforge";
 import {
   BadgeCheck,
   Briefcase,
@@ -28,17 +29,82 @@ import type { Profile } from "@/lib/types";
 const TABS = ["Overview", "Agent", "Connections"] as const;
 type Tab = (typeof TABS)[number];
 
+type BackendAgentRow = {
+  id: string;
+  user_id?: string;
+  name?: string;
+  persona_tone?: string;
+  agent_intro?: string;
+  mission?: string;
+  interests?: string[];
+  goals?: string[];
+  skills?: string[];
+  intent?: string;
+  memory?: string[];
+  agent_mode_enabled?: boolean;
+  profiles?: {
+    city?: string;
+    full_name?: string;
+    avatar_color?: string;
+    role?: string;
+    company?: string;
+    bio?: string;
+    stage?: string;
+    profession?: string;
+    offering?: string;
+    availability?: string;
+    likes?: string;
+    dislikes?: string;
+    topics_enjoy?: string;
+    topics_avoid?: string;
+    community_id?: string;
+  } | null;
+};
+
 export function ProfilePage() {
   const { id } = useParams<{ id: string }>();
   const user = useUser();
-  const profile = id === "me" ? user : getSeedProfile(id);
   const isMe = id === "me";
+  const [backendProfile, setBackendProfile] = useState<Profile | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
   const [tab, setTab] = useState<Tab>("Overview");
+  const profile = isMe ? user : backendProfile;
 
+  useEffect(() => {
+    let cancelled = false;
+    async function loadBackendProfile() {
+      if (isMe || !id) {
+        setBackendProfile(null);
+        setLoadingProfile(false);
+        return;
+      }
+      setLoadingProfile(true);
+      try {
+        const { data } = await insforge.database
+          .from("agents")
+          .select(
+            "id,user_id,name,persona_tone,agent_intro,mission,interests,goals,skills,intent,memory,agent_mode_enabled,profiles(city,full_name,avatar_color,role,company,bio,stage,profession,offering,availability,likes,dislikes,topics_enjoy,topics_avoid,community_id)",
+          )
+          .eq("id", id)
+          .single();
+        if (!cancelled) setBackendProfile(agentRowToProfile(data as BackendAgentRow | null));
+      } catch {
+        if (!cancelled) setBackendProfile(null);
+      } finally {
+        if (!cancelled) setLoadingProfile(false);
+      }
+    }
+    void loadBackendProfile();
+    return () => {
+      cancelled = true;
+    };
+  }, [id, isMe]);
+
+  if (loadingProfile) return <p className="text-sm text-muted-foreground">Loading profile...</p>;
   if (!profile) return <p className="text-sm text-muted-foreground">Profile not found.</p>;
 
   const theme = getProfileTheme(profile.id);
-  const mutuals = SEED_PROFILES.filter((p) => p.id !== profile.id).slice(0, 6);
+  const mutuals: Profile[] = [];
 
   return (
     <div
@@ -56,19 +122,19 @@ export function ProfilePage() {
             theme.shell,
           )}
         >
-          <div className="relative h-48 overflow-hidden bg-black md:h-56">
+          <div className="relative h-48 overflow-hidden bg-black px-4 pt-5 md:h-56 md:px-5">
             <img
               src={theme.cover}
               alt=""
-              className="h-full w-full object-cover opacity-75"
+              className="absolute inset-0 h-full w-full object-cover opacity-75"
               loading="lazy"
               referrerPolicy="no-referrer"
             />
             <div
-              className={`absolute inset-0 bg-gradient-to-br ${profile.avatar_color} opacity-45`}
+              className={`absolute inset-0 bg-gradient-to-br ${profile.avatar_color} opacity-35`}
             />
             <div className={cn("absolute inset-0", theme.overlay)} />
-            <div className="absolute left-5 top-5 flex flex-wrap gap-2">
+            <div className="relative z-10 flex flex-wrap gap-2">
               {theme.badges.map((badge) => (
                 <span
                   key={badge}
@@ -80,9 +146,14 @@ export function ProfilePage() {
             </div>
           </div>
           <div className="p-4 md:p-5">
-            <div className="-mt-16 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                <div className={cn("rounded-[1.3rem] bg-white p-1 shadow-xl", theme.avatarFrame)}>
+                <div
+                  className={cn(
+                    "-mt-16 rounded-[1.3rem] bg-white p-1 shadow-xl",
+                    theme.avatarFrame,
+                  )}
+                >
                   <GradientAvatar
                     name={profile.full_name}
                     colorClass={profile.avatar_color}
@@ -169,7 +240,6 @@ export function ProfilePage() {
                 )}
               </div>
             </div>
-
             <div className="mt-5 grid gap-2 sm:grid-cols-4">
               <Stat value={profile.stage} label="Stage" theme={theme} />
               <Stat value={profile.skills.slice(0, 2).join(", ")} label="Skills" theme={theme} />
@@ -607,6 +677,50 @@ function MiniPanel({
       {children}
     </div>
   );
+}
+
+function agentRowToProfile(row: BackendAgentRow | null): Profile | null {
+  if (!row) return null;
+  const profile = row.profiles;
+  const fullName = profile?.full_name || row.name || "Platform member";
+  const interests = row.interests || [];
+  const skills = row.skills || [];
+  const goals = (row.goals || []).filter((goal): goal is Profile["goals"][number] =>
+    Object.prototype.hasOwnProperty.call(GOAL_LABELS, goal),
+  );
+
+  return {
+    id: row.id,
+    user_id: row.user_id,
+    community_id: profile?.community_id || DEMO_COMMUNITY.id,
+    full_name: fullName,
+    city: profile?.city || "",
+    profession: profile?.profession || "",
+    company: profile?.company || "",
+    role: (profile?.role as Profile["role"]) || "Builder",
+    stage: profile?.stage || "",
+    bio: profile?.bio || row.mission || row.intent || "",
+    avatar_color: profile?.avatar_color || "from-primary via-agent to-sky-400",
+    interests,
+    skills,
+    goals,
+    current_ask: row.intent || row.mission || "",
+    offering: profile?.offering || "",
+    availability: profile?.availability || "",
+    likes: profile?.likes || "",
+    dislikes: profile?.dislikes || "",
+    topics_enjoy: profile?.topics_enjoy || interests.join(", "),
+    topics_avoid: profile?.topics_avoid || "",
+    agent: {
+      agent_name: row.name || `${fullName.split(" ")[0]} Bee`,
+      tone: (row.persona_tone as Profile["agent"]["tone"]) || "Friendly",
+      agent_intro: row.agent_intro || row.mission || "",
+      current_mission: row.mission || row.intent || "",
+      status: row.agent_mode_enabled === false ? "paused" : "active",
+      memory: row.memory || [],
+    },
+    permissions: { ...DEFAULT_PERMISSIONS },
+  };
 }
 
 function Card({

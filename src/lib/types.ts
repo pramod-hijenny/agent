@@ -102,7 +102,9 @@ export interface IntroRequest {
 }
 
 export interface TranscriptTurn {
-  speaker: "user" | "other";
+  speaker_agent_id?: string;
+  speaker_role?: "source" | "candidate" | "system" | string;
+  label?: string;
   text: string;
 }
 

@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
-from .routers import agents, auth, discovery, interviews, messages
+from .routers import agent_network, agents, auth, discovery, interviews, messages
 
 app = FastAPI(title="GetMyBee Agent API", version="0.1.0")
 
@@ -29,3 +29,4 @@ app.include_router(agents.router)
 app.include_router(discovery.router)
 app.include_router(messages.router)
 app.include_router(interviews.router)
+app.include_router(agent_network.router)

@@ -39,10 +39,18 @@ venv/
 *.sw?
 .rocketride/
 
+# Playwright QA
+playwright-report/
+test-results/
+qa/artifacts/
+qa/.profiles/
+.cache/ms-playwright/
+
 # InsForge & AI agent skills
 .insforge
 .agent
 .agents
+.codex
 .augment
 .claude
 .cline

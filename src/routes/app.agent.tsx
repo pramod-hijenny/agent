@@ -10,6 +10,7 @@ import {
   Bot,
   Check,
   Loader2,
+  Network,
   Pause,
   Play,
   Plus,
@@ -20,7 +21,7 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import { agentsUpsert, testAgent } from "@/lib/api";
+import { agentNetworkRun, agentsUpsert, testAgent } from "@/lib/api";
 import { getInsforgeAccessToken } from "@/lib/auth";
 import {
   RULE_META,
@@ -44,6 +45,13 @@ export function AgentPage() {
   const [chat, setChat] = useState<{ from: "user" | "agent"; text: string }[]>([]);
   const [input, setInput] = useState("");
   const [agentLoading, setAgentLoading] = useState(false);
+  const [networkRunning, setNetworkRunning] = useState(false);
+  const [networkResult, setNetworkResult] = useState<{
+    status: string;
+    matches: number;
+    conversations: number;
+    actions: number;
+  } | null>(null);
   if (!user) return null;
 
   // Send a sample message to the user's bee and show how it would respond.
@@ -103,6 +111,39 @@ export function AgentPage() {
     }
   }
 
+  async function runAgentNetwork() {
+    if (!user) return;
+    setNetworkRunning(true);
+    try {
+      const token = await getInsforgeAccessToken();
+      if (!token) throw new Error("Sign in again so your bee can run.");
+      const result = await agentNetworkRun(token, {
+        kind: "all",
+        query:
+          user.current_ask ||
+          user.agent.current_mission ||
+          "Find useful in-platform matches for my goals.",
+        limit: 3,
+      });
+      const runResult = result.result || {};
+      setNetworkResult({
+        status: result.status,
+        matches: runResult.matches?.length || 0,
+        conversations: runResult.conversations?.length || 0,
+        actions: runResult.actions?.length || 0,
+      });
+      toast.success(
+        result.status === "held"
+          ? "Your bee ran and held one item for review."
+          : "Your bee completed an agent-network run.",
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not run the agent network");
+    } finally {
+      setNetworkRunning(false);
+    }
+  }
+
   return (
     <div className="w-full space-y-5">
       <section className="app-hero relative overflow-hidden rounded-[1.45rem] p-5 text-white shadow-[0_24px_70px_oklch(0.18_0.035_80_/_0.28)] md:p-6">
@@ -137,6 +178,52 @@ export function AgentPage() {
         </div>
       </section>
       <AgentCard profile={user} />
+
+      <Panel title="Agent network console">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-2 rounded-full bg-black px-3 py-1.5 text-xs font-black text-[#f7b801]">
+                <Network className="h-3.5 w-3.5" /> Internal network
+              </span>
+              <span className="rounded-full bg-[#fff4c8] px-3 py-1.5 text-xs font-black text-black">
+                No external A2A
+              </span>
+            </div>
+            <p className="mt-3 text-sm font-semibold leading-6 text-[var(--app-ink-soft)]">
+              {user.current_ask || user.agent.current_mission || "Your bee is ready to run."}
+            </p>
+          </div>
+          <Button
+            onClick={() => void runAgentNetwork()}
+            disabled={networkRunning}
+            className="rounded-[1rem] bg-black font-black text-[#f7b801] hover:bg-black/90"
+          >
+            {networkRunning ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Network className="h-4 w-4" />
+            )}
+            {networkRunning ? "Running network" : "Run full network"}
+          </Button>
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-4">
+          {[
+            ["status", networkResult?.status || "idle"],
+            ["matches", String(networkResult?.matches ?? 0)],
+            ["talks", String(networkResult?.conversations ?? 0)],
+            ["actions", String(networkResult?.actions ?? 0)],
+          ].map(([label, value]) => (
+            <div key={label} className="border-t border-[var(--app-border)] pt-3">
+              <p className="text-[10px] font-black uppercase tracking-wide text-[var(--app-muted)]">
+                {label}
+              </p>
+              <p className="mt-1 text-lg font-black text-black">{value}</p>
+            </div>
+          ))}
+        </div>
+      </Panel>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel title="Agent memory">

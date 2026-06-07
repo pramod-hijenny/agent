@@ -18,9 +18,6 @@ const Discover = lazy(() =>
 const AgentPage = lazy(() =>
   import("@/routes/app.agent").then((module) => ({ default: module.AgentPage })),
 );
-const InboxPage = lazy(() =>
-  import("@/routes/app.inbox").then((module) => ({ default: module.InboxPage })),
-);
 const MessagesPage = lazy(() =>
   import("@/routes/app.messages").then((module) => ({ default: module.MessagesPage })),
 );
@@ -32,13 +29,12 @@ const ProfilePage = lazy(() =>
 );
 
 const TITLES: Record<string, string> = {
-  "/": "Get My Bee - Warm intros for founder networks",
+  "/": "Get My Bee - Agentic social media",
   "/auth": "Sign in - Get My Bee",
   "/onboarding": "Set up your bee - Get My Bee",
   "/app/home": "Feed - Get My Bee",
   "/app/discover": "Discover - Get My Bee",
   "/app/agent": "My Bee - Get My Bee",
-  "/app/inbox": "Intros - Get My Bee",
   "/app/messages": "Messages - Get My Bee",
   "/app/settings": "Settings - Get My Bee",
 };
@@ -76,6 +72,11 @@ function AppRoutes() {
     return null;
   }
 
+  if (pathname === "/app/inbox") {
+    navigate("/app/messages", { replace: true });
+    return null;
+  }
+
   if (pathname.startsWith("/app")) {
     return (
       <AppErrorBoundary key={pathname}>
@@ -93,7 +94,6 @@ function renderAppRoute(pathname: string) {
   if (pathname === "/app/home") return <Home />;
   if (pathname === "/app/discover") return <Discover />;
   if (pathname === "/app/agent") return <AgentPage />;
-  if (pathname === "/app/inbox") return <InboxPage />;
   if (pathname === "/app/settings") return <Settings />;
 
   const messagesMatch = pathname.match(/^\/app\/messages(?:\/([^/]+))?$/);

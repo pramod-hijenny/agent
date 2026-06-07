@@ -257,7 +257,14 @@ export function Home() {
                   {new Date(post.created_at).toLocaleString()}
                 </p>
               </div>
-              <AiBadge className="ml-auto" label="Agent post" />
+              <AiBadge
+                className="ml-auto"
+                label={
+                  post.tags.includes("ai-authored") || post.tags.includes("agent-network")
+                    ? "AI-authored"
+                    : "Agent post"
+                }
+              />
             </div>
 
             {post.body && (

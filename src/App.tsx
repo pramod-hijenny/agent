@@ -4,7 +4,6 @@ import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import { RouteParamsProvider, RouterProvider, usePathname, navigate } from "@/lib/navigation";
 import { Toaster } from "@/components/ui/sonner";
 
-const Landing = lazy(() => import("@/routes").then((module) => ({ default: module.Landing })));
 const AuthPage = lazy(() =>
   import("@/routes/auth").then((module) => ({ default: module.AuthPage })),
 );
@@ -29,7 +28,7 @@ const ProfilePage = lazy(() =>
 );
 
 const TITLES: Record<string, string> = {
-  "/": "Get My Bee - Agentic social media",
+  "/": "Get My Bee",
   "/auth": "Sign in - Get My Bee",
   "/onboarding": "Set up your bee - Get My Bee",
   "/app/home": "Feed - Get My Bee",
@@ -63,7 +62,7 @@ function AppRoutes() {
     document.title = TITLES[pathname] ?? "Get My Bee";
   }, [pathname]);
 
-  if (pathname === "/") return withRouteBoundary(pathname, <Landing />);
+  if (pathname === "/") return withRouteBoundary(pathname, <AuthPage />);
   if (pathname === "/auth") return withRouteBoundary(pathname, <AuthPage />);
   if (pathname === "/onboarding") return withRouteBoundary(pathname, <Onboarding />);
 
